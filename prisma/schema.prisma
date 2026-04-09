@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  clients   Client[]
+  notes     Note[]
+}
+
+model Client {
+  id          String   @id @default(uuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  name        String
+  email       String?
+  phone       String?
+  logoUrl     String?
+  address     String?
+
+  createdAt   DateTime @default(now())
+
+  notes       Note[]
+
+  @@index([ownerId])
+}
+
+model Note {
+  id          String   @id @default(uuid())
+  ownerId     String
+  clientId    String
+
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  description String
+  date        DateTime
+  weekNumber  Int
+
+  createdAt   DateTime @default(now())
+
+  items       NoteItem[]
+
+  @@index([ownerId])
+  @@index([clientId])
+}
+
+model NoteItem {
+  id              String  @id @default(uuid())
+  noteId          String
+  note            Note    @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  code            String?
+  description     String
+
+  unit            String      // e.g. hour, day, piece
+  unitPrice       Float
+  totalUnits      Float
+  totalUnitPrice  Float       // unitPrice * totalUnits
+  totalPrice      Float       // final (can include tax/adjustment)
+
+  @@index([noteId])
+}
