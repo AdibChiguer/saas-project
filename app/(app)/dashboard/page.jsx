@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import React from "react";
 
-export default async function Dashboard() {
+export default function Dashboard() {
   const router = useRouter();
 
   const actions = [

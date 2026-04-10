@@ -1,25 +1,20 @@
-// import { getServerSession } from "next-auth"
-// import { authOptions } from "@/lib/auth"
-// import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/prisma"
 
-// export const onAuthenticateUser = async () => {
-//   try {
-//     const session = await getServerSession(authOptions)
-//     if (!session?.user) {
-//       return { status: 403, error: "Unauthorized" }
-//     }
+export const getOrCreateUser = async () => {
+  try {
+    let user = await prisma.user.findFirst();
+    
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: "admin@example.com",
+        },
+      });
+    }
 
-//     const userExist = await prisma.user.findUnique({
-//       where: { id: session.user.id },
-//     })
-
-//     if (!userExist) {
-//       return { status: 404, error: "User not found" }
-//     }
-
-//     return { status: 200, user: userExist }
-//   } catch (error) {
-//     console.error("🔴 error:", error)
-//     return { status: 500, error: "Internal Server Error" }
-//   }
-// }
+    return { status: 200, user };
+  } catch (error) {
+    console.error("🔴 getOrCreateUser error:", error);
+    return { status: 500, error: "Internal Server Error" };
+  }
+}

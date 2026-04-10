@@ -1,13 +1,16 @@
 "use client";
 
-import Image from "next/image";
+import { createClient } from "@/actions/client";
 import { useState } from "react";
 
 const NewClientForm = ({ onCreated }) => {
-  const [name, setName] = useState("");
+  const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [adresse, setAdresse] = useState("");
   const [logoBase64, setLogoBase64] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   function handleLogoChange(e) {
     const file = e.target.files[0];
@@ -15,40 +18,69 @@ const NewClientForm = ({ onCreated }) => {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setLogoBase64(reader.result); // data:image/png;base64,...
+      setLogoBase64(reader.result);
       setPreview(reader.result);
     };
     reader.readAsDataURL(file);
   }
 
   async function handleSubmit() {
-    const res = await fetch("/api/clients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, logoUrl: logoBase64 }),
-    });
+    setLoading(true);
+    try {
+      const res = await createClient({ 
+        nom, 
+        email, 
+        telephone, 
+        adresse, 
+        logoUrl: logoBase64 
+      });
 
-    const data = await res.json();
-    onCreated(data.id);
-    alert("Client created successfully");
+      if (res.status === 201) {
+        onCreated(res.data.id);
+        alert("Client créé avec succès");
+      } else {
+        alert("Erreur: " + res.error);
+      }
+    } catch (error) {
+      alert("Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="space-y-4">
-      <input
-        placeholder="Client name"
-        onChange={(e) => setName(e.target.value)}
-        className="border p-2 w-full"
-      />
+    <div className="space-y-4 bg-white p-6 rounded-lg shadow">
+      <h2 className="text-xl font-bold mb-4">Nouveau Client</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input
+          placeholder="Nom du client"
+          onChange={(e) => setNom(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
 
-      <input
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-        className="border p-2 w-full"
-      />
+        <input
+          placeholder="Email"
+          type="email"
+          onChange={(e) => setEmail(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+
+        <input
+          placeholder="Téléphone"
+          onChange={(e) => setTelephone(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+
+        <input
+          placeholder="Adresse"
+          onChange={(e) => setAdresse(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-medium">Client Logo</label>
+        <label className="block text-sm font-medium">Logo du Client</label>
         <input
           type="file"
           accept="image/*"
@@ -66,9 +98,10 @@ const NewClientForm = ({ onCreated }) => {
 
       <button
         onClick={handleSubmit}
-        className="bg-black text-white px-4 py-2"
+        disabled={loading}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50 transition-colors"
       >
-        Create Client
+        {loading ? "Création..." : "Créer le Client"}
       </button>
     </div>
   );

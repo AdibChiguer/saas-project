@@ -1,17 +1,20 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { getOrCreateUser } from "./user";
+
 export const getAllClients = async () => {
   try {
+    const { user } = await getOrCreateUser();
+    
     const clients = await prisma.client.findMany({
       where: {
-        ownerId: checkUser.id,
+        ownerId: user.id,
       },
       orderBy: {
         createdAt: "desc",
       },
     });
-
-    if (clients.length === 0) {
-      return { status: 404, error: "No clients found" };
-    }
 
     return { status: 200, data: clients };
   } catch (error) {
@@ -22,19 +25,23 @@ export const getAllClients = async () => {
 
 export const createClient = async (payload) => {
   try {
-    const { name, email, phone, logoUrl } = payload;
+    const { nom, email, telephone, adresse, logoUrl, notes } = payload;
 
-    if (!name) {
-      return { status: 400, error: "Name is required" };
+    if (!nom || !email) {
+      return { status: 400, error: "Nom and email are required" };
     }
+
+    const { user } = await getOrCreateUser();
 
     const client = await prisma.client.create({
       data: {
-        name,
+        nom,
         email,
-        phone,
+        telephone,
+        adresse,
         logoUrl,
-        ownerId: checkUser.id,
+        notes,
+        ownerId: user.id,
       },
     });
 

@@ -1,59 +1,58 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getOrCreateUser } from "./user";
 
-export const createNote = async (payload) => {
+export const createWorkLog = async (payload) => {
   try {
-    const { clientId, description, date, weekNumber, items } = payload;
+    const { clientId, jour, heureDebut, heureFin, lieu, modeTarif, prixUnitaire, notes, semaineRef } = payload;
 
-    if (!clientId) {
-      return { status: 400, error: "clientId is required" };
+    if (!clientId || !jour || !heureDebut || !heureFin || !modeTarif || !prixUnitaire) {
+      return { status: 400, error: "Missing required fields" };
     }
 
-    if (!items || items.length === 0) {
-      return { status: 400, error: "At least one item required" };
-    }
+    // Calcul des heures
+    const start = new Date(`1970-01-01T${heureDebut}:00`);
+    const end = new Date(`1970-01-01T${heureFin}:00`);
+    let diff = (end - start) / (1000 * 60 * 60);
+    if (diff < 0) diff += 24; // Handle overnight shift if any
 
-    // SECURITY: ensure client belongs to user
-    const client = await prisma.client.findFirst({
-      where: {
-        id: clientId,
-        ownerId: checkUser.id,
-      },
-    });
+    const heuresTotal = diff;
+    const montant = modeTarif === "horaire" ? heuresTotal * prixUnitaire : prixUnitaire;
 
-    if (!client) {
-      return { status: 404, error: "Client not found" };
-    }
-
-    const note = await prisma.note.create({
+    const workLog = await prisma.workLog.create({
       data: {
-        description,
-        date: new Date(date),
-        weekNumber,
-        ownerId: checkUser.id,
         clientId,
-        items: {
-          create: items.map((item) => ({
-            code: item.code,
-            description: item.description,
-            unit: item.unit,
-            unitPrice: item.unitPrice,
-            totalUnits: item.totalUnits,
-            totalUnitPrice: item.totalUnitPrice,
-            totalPrice: item.totalPrice,
-          })),
-        },
-      },
-      include: {
-        items: true,
-        client: true,
+        jour: new Date(jour),
+        heureDebut,
+        heureFin,
+        heuresTotal,
+        lieu,
+        modeTarif,
+        prixUnitaire,
+        montant,
+        notes,
+        semaineRef,
       },
     });
 
-    return { status: 201, data: note };
+    return { status: 201, data: workLog };
   } catch (error) {
-    console.log("🔴 createNote error:", error);
+    console.log("🔴 createWorkLog error:", error);
+    return { status: 500, error: "Internal Server Error" };
+  }
+};
+
+export const getWorkLogsBySemaine = async (semaineRef) => {
+  try {
+    const workLogs = await prisma.workLog.findMany({
+      where: { semaineRef },
+      include: { client: true },
+      orderBy: { jour: "asc" },
+    });
+    return { status: 200, data: workLogs };
+  } catch (error) {
+    console.log("🔴 getWorkLogsBySemaine error:", error);
     return { status: 500, error: "Internal Server Error" };
   }
 };
