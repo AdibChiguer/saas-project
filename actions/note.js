@@ -56,3 +56,46 @@ export const getWorkLogsBySemaine = async (semaineRef) => {
     return { status: 500, error: "Internal Server Error" };
   }
 };
+
+export const getDashboardStats = async (semaineRef, monthDate) => {
+  try {
+    const { user } = await getOrCreateUser();
+
+    // Notes de la semaine
+    const weeklyLogs = await prisma.workLog.findMany({
+      where: {
+        semaineRef,
+        client: { ownerId: user.id },
+      },
+      include: { client: true },
+      orderBy: { jour: "asc" },
+    });
+
+    // Notes du mois (approximate using Date range)
+    const startOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    const endOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+
+    const monthlyLogs = await prisma.workLog.findMany({
+      where: {
+        jour: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+        client: { ownerId: user.id },
+      },
+      include: { client: true },
+      orderBy: { jour: "asc" },
+    });
+
+    return {
+      status: 200,
+      data: {
+        weekly: weeklyLogs,
+        monthly: monthlyLogs,
+      },
+    };
+  } catch (error) {
+    console.log("🔴 getDashboardStats error:", error);
+    return { status: 500, error: "Internal Server Error" };
+  }
+};

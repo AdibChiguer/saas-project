@@ -2,11 +2,17 @@
 
 import { getAllClients } from "@/actions/client";
 import { createWorkLog } from "@/actions/note";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import NewClientForm from "@/components/global/NewClientForm";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const WorkLogForm = ({ initialClientId }) => {
+  const router = useRouter();
   const [clients, setClients] = useState([]);
   const [clientId, setClientId] = useState(initialClientId || "");
+  const [showNewClientForm, setShowNewClientForm] = useState(false);
+  
   const [jour, setJour] = useState(new Date().toISOString().split('T')[0]);
   const [heureDebut, setHeureDebut] = useState("08:00");
   const [heureFin, setHeureFin] = useState("17:00");
@@ -16,13 +22,20 @@ const WorkLogForm = ({ initialClientId }) => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function fetchClients() {
-      const res = await getAllClients();
-      if (res.status === 200) setClients(res.data);
-    }
-    fetchClients();
+  const fetchClients = useCallback(async () => {
+    const res = await getAllClients();
+    if (res.status === 200) setClients(res.data);
   }, []);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  const onClientCreated = (newId) => {
+    fetchClients();
+    setClientId(newId);
+    setShowNewClientForm(false);
+  };
 
   // Helper to get week reference (e.g. 2025-W03)
   function getWeekRef(dateStr) {
@@ -53,122 +66,153 @@ const WorkLogForm = ({ initialClientId }) => {
 
       const res = await createWorkLog(payload);
       if (res.status === 201) {
-        alert("Note de travail enregistrée !");
-        // Reset or redirect
+        toast.success("Note de travail enregistrée avec succès !");
+        // Redirection vers le dashboard après un court délai
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1500);
       } else {
-        alert("Erreur: " + res.error);
+        toast.error("Erreur: " + res.error);
       }
     } catch (error) {
-      alert("Une erreur est survenue");
+      toast.error("Une erreur est survenue lors de l'enregistrement");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-6 bg-white p-6 rounded-lg shadow max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold border-b pb-2">Saisie Journalière</h2>
+    <div className="space-y-6 bg-white p-6 rounded-lg shadow max-w-2xl mx-auto border border-zinc-100">
+      <div className="flex items-center justify-between border-b pb-4">
+        <h2 className="text-2xl font-bold text-zinc-800">Saisie Journalière</h2>
+        <button 
+          onClick={() => setShowNewClientForm(!showNewClientForm)}
+          className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+            showNewClientForm ? 'bg-zinc-100 text-zinc-600' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+          }`}
+        >
+          {showNewClientForm ? "Annuler" : "+ Nouveau Client"}
+        </button>
+      </div>
       
-      <div className="grid grid-cols-1 gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Client</label>
-          <select
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            className="border p-2 rounded w-full"
-          >
-            <option value="">Choisir un client</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nom}
-              </option>
-            ))}
-          </select>
+      {showNewClientForm && (
+        <div className="bg-zinc-50 p-4 rounded-lg border border-dashed border-zinc-200">
+          <NewClientForm onCreated={onClientCreated} />
         </div>
+      )}
 
-        <div className="grid grid-cols-2 gap-4">
+      {!showNewClientForm && (
+        <div className="grid grid-cols-1 gap-6">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Date</label>
-            <input
-              type="date"
-              value={jour}
-              onChange={(e) => setJour(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Lieu</label>
-            <input
-              placeholder="Chantier, Bureau, Remote..."
-              value={lieu}
-              onChange={(e) => setLieu(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Heure Début</label>
-            <input
-              type="time"
-              value={heureDebut}
-              onChange={(e) => setHeureDebut(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Heure Fin</label>
-            <input
-              type="time"
-              value={heureFin}
-              onChange={(e) => setHeureFin(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Mode Tarif</label>
+            <label className="text-sm font-semibold text-zinc-700">Client</label>
             <select
-              value={modeTarif}
-              onChange={(e) => setModeTarif(e.target.value)}
-              className="border p-2 rounded w-full"
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="border border-zinc-200 p-3 rounded-lg w-full bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             >
-              <option value="horaire">Horaire</option>
-              <option value="forfait">Forfait</option>
+              <option value="">Sélectionner un client</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}
+                </option>
+              ))}
             </select>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Prix Unitaire (€)</label>
-            <input
-              type="number"
-              value={prixUnitaire}
-              onChange={(e) => setPrixUnitaire(Number(e.target.value))}
-              className="border p-2 rounded w-full"
-            />
-          </div>
-        </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Notes / Observations</label>
-          <textarea
-            placeholder="Détails du travail effectué..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="border p-2 rounded w-full h-24"
-          />
-        </div>
-      </div>
+          {clientId && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-zinc-700">Date</label>
+                  <input
+                    type="date"
+                    value={jour}
+                    onChange={(e) => setJour(e.target.value)}
+                    className="border border-zinc-200 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-zinc-700">Lieu</label>
+                  <input
+                    placeholder="Chantier, Bureau, Remote..."
+                    value={lieu}
+                    onChange={(e) => setLieu(e.target.value)}
+                    className="border border-zinc-200 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
 
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50 transition-all shadow-md"
-      >
-        {loading ? "Enregistrement..." : "Enregistrer la journée"}
-      </button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-zinc-700">Heure Début</label>
+                  <input
+                    type="time"
+                    value={heureDebut}
+                    onChange={(e) => setHeureDebut(e.target.value)}
+                    className="border border-zinc-200 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-zinc-700">Heure Fin</label>
+                  <input
+                    type="time"
+                    value={heureFin}
+                    onChange={(e) => setHeureFin(e.target.value)}
+                    className="border border-zinc-200 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-zinc-700">Mode Tarif</label>
+                  <select
+                    value={modeTarif}
+                    onChange={(e) => setModeTarif(e.target.value)}
+                    className="border border-zinc-200 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="horaire">Horaire</option>
+                    <option value="forfait">Forfait</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-zinc-700">Prix Unitaire (€)</label>
+                  <input
+                    type="number"
+                    value={prixUnitaire}
+                    onChange={(e) => setPrixUnitaire(Number(e.target.value))}
+                    className="border border-zinc-200 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-zinc-700">Notes / Observations</label>
+                <textarea
+                  placeholder="Détails du travail effectué..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="border border-zinc-200 p-3 rounded-lg w-full h-24 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                />
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full bg-zinc-900 hover:bg-black text-white px-6 py-4 rounded-xl font-bold disabled:opacity-50 transition-all shadow-lg active:scale-95"
+              >
+                {loading ? "Enregistrement..." : "Enregistrer la journée"}
+              </button>
+            </div>
+          )}
+
+          {!clientId && (
+            <div className="py-12 text-center text-zinc-400 border-2 border-dashed border-zinc-100 rounded-xl">
+              Veuillez sélectionner un client pour continuer
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

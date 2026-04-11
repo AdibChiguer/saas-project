@@ -49,9 +49,7 @@ const NewClientForm = ({ onCreated }) => {
   }
 
   return (
-    <div className="space-y-4 bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-bold mb-4">Nouveau Client</h2>
-      
+    <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <input
           placeholder="Nom du client"
