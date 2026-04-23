@@ -15,42 +15,34 @@
 }
 
 :root {
-  --background: rgb(250, 249, 245);
-  --foreground: rgb(61, 57, 41);
-  --card: rgb(250, 249, 245);
-  --card-foreground: rgb(20, 20, 19);
+  --background: rgb(241, 245, 249); /* Slate 100 pour le fond */
+  --foreground: rgb(15, 23, 42); /* Slate 900 */
+  --card: rgb(255, 255, 255);
+  --card-foreground: rgb(15, 23, 42);
   --popover: rgb(255, 255, 255);
-  --popover-foreground: rgb(40, 38, 27);
-  --primary: rgb(201, 100, 66);
+  --popover-foreground: rgb(15, 23, 42);
+  --primary: rgb(37, 99, 235); /* Blue 600 */
   --primary-foreground: rgb(255, 255, 255);
-  --secondary: rgb(233, 230, 220);
-  --secondary-foreground: rgb(83, 81, 70);
-  --muted: rgb(237, 233, 222);
-  --muted-foreground: rgb(131, 130, 125);
-  --accent: rgb(233, 230, 220);
-  --accent-foreground: rgb(40, 38, 27);
-  --destructive: rgb(20, 20, 19);
+  --secondary: rgb(241, 245, 249);
+  --secondary-foreground: rgb(71, 85, 105);
+  --muted: rgb(241, 245, 249);
+  --muted-foreground: rgb(100, 116, 139);
+  --accent: rgb(241, 245, 249);
+  --accent-foreground: rgb(15, 23, 42);
+  --destructive: rgb(239, 68, 68);
   --destructive-foreground: rgb(255, 255, 255);
-  --border: rgb(218, 217, 212);
-  --input: rgb(180, 178, 167);
-  --ring: rgb(201, 100, 66);
-  --chart-1: rgb(176, 87, 48);
-  --chart-2: rgb(156, 135, 245);
-  --chart-3: rgb(222, 216, 196);
-  --chart-4: rgb(219, 211, 240);
-  --chart-5: rgb(180, 85, 45);
-  --sidebar: rgb(245, 244, 238);
-  --sidebar-foreground: rgb(61, 61, 58);
-  --sidebar-primary: rgb(201, 100, 66);
-  --sidebar-primary-foreground: rgb(251, 251, 251);
-  --sidebar-accent: rgb(233, 230, 220);
-  --sidebar-accent-foreground: rgb(52, 52, 52);
-  --sidebar-border: rgb(235, 235, 235);
-  --sidebar-ring: rgb(181, 181, 181);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --radius: 0.5rem;
+  --border: rgb(226, 232, 240);
+  --input: rgb(226, 232, 240);
+  --ring: rgb(37, 99, 235);
+  --radius: 1rem; /* Rayon plus grand pour un look moderne */
+  --sidebar: rgb(2, 6, 23); /* Slate 950 pour la sidebar */
+  --sidebar-foreground: rgb(248, 250, 252);
+  --sidebar-primary: rgb(37, 99, 235);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: rgb(30, 41, 59);
+  --sidebar-accent-foreground: rgb(248, 250, 252);
+  --sidebar-border: rgb(30, 41, 59);
+  --sidebar-ring: rgb(37, 99, 235);
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
