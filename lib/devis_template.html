@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DEVIS n° 122</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      font-size: 11px;
+      color: #222;
+      background: #fff;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 12mm 14mm 14mm 14mm;
+      background: #fff;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10mm;
+    }
+
+    .devis-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #1a1a1a;
+      line-height: 1;
+    }
+
+    .logo {
+      text-align: right;
+    }
+
+    .logo-egw {
+      font-size: 28px;
+      font-weight: 900;
+      color: #003087;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      font-weight: 700;
+      color: #003087;
+      letter-spacing: 2px;
+      text-align: right;
+    }
+
+    /* ── COMPANY INFO ── */
+    .company-info {
+      margin-bottom: 8mm;
+    }
+
+    .company-info strong {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .company-info p {
+      font-style: italic;
+      font-size: 10px;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    /* ── META + RECEIVER ROW ── */
+    .meta-receiver {
+      display: flex;
+      gap: 8mm;
+      margin-bottom: 8mm;
+    }
+
+    .meta-box {
+      background: #d6e4f7;
+      padding: 6px 10px;
+      flex: 0 0 auto;
+      width: 55mm;
+      font-size: 10px;
+    }
+
+    .meta-box table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .meta-box td {
+      padding: 2px 0;
+      color: #222;
+    }
+
+    .meta-box td:first-child {
+      font-weight: 400;
+      white-space: nowrap;
+      padding-right: 6px;
+    }
+
+    .meta-box td:last-child {
+      font-weight: 400;
+    }
+
+    .receiver {
+      flex: 1;
+      padding-left: 4mm;
+    }
+
+    .receiver .label {
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    .receiver .company-name {
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .receiver p {
+      font-style: italic;
+      font-size: 10px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* ── ADDITIONAL INFO ── */
+    .extra-info {
+      margin-bottom: 6mm;
+    }
+
+    .extra-info .label {
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    /* ── ITEMS TABLE ── */
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 4mm;
+    }
+
+    .items-table thead tr {
+      border-bottom: 2px solid #1a1a1a;
+    }
+
+    .items-table th {
+      font-weight: 700;
+      font-size: 10.5px;
+      padding: 4px 4px;
+      text-align: left;
+    }
+
+    .items-table th:nth-child(n+4) {
+      text-align: right;
+    }
+
+    .items-table tbody tr {
+      border-bottom: 1px solid #ccc;
+    }
+
+    .items-table td {
+      padding: 4px 4px;
+      font-size: 10px;
+    }
+
+    .items-table td:nth-child(n+4) {
+      text-align: right;
+    }
+
+    /* ── TOTALS ── */
+    .totals {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 6mm;
+    }
+
+    .totals-box {
+      font-size: 10.5px;
+      width: 70mm;
+    }
+
+    .totals-box .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+
+    .totals-box .total-row.grand {
+      font-weight: 700;
+      font-size: 12px;
+      color: #003087;
+      border-top: 1px solid #003087;
+      margin-top: 3px;
+      padding-top: 4px;
+    }
+
+    /* ── SIGNATURE ── */
+    .signature {
+      text-align: center;
+      font-style: italic;
+      font-size: 9.5px;
+      color: #555;
+      border-top: 1px solid #ccc;
+      padding-top: 4px;
+      margin-bottom: 8mm;
+    }
+
+    /* ── SCHEDULE TABLE ── */
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .schedule-table th {
+      background: #fff;
+      font-weight: 700;
+      text-align: left;
+      padding: 5px 4px;
+      border: 1px solid #999;
+    }
+
+    .schedule-table td {
+      padding: 8px 4px;
+      border: 1px solid #999;
+      height: 18px;
+    }
+
+    /* ── FOOTER BAR ── */
+    .footer-bar {
+      position: fixed;
+      bottom: 0;
+      width: 182mm; /* 210mm - 2*14mm */
+      height: 6px;
+      background: #003087;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; padding: 12mm 14mm 20mm 14mm; }
+      .footer-bar { position: fixed; bottom: 0; left: 14mm; width: 182mm; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="devis-title">DEVIS n° <span id="devis-number">122</span></div>
+    <div class="logo">
+      <div class="logo-egw">EGW</div>
+      <div class="logo-sub">INSTALLTEC</div>
+    </div>
+  </div>
+
+  <!-- COMPANY INFO -->
+  <div class="company-info">
+    <strong>EGW-INSTALLTEC</strong>
+    <p>Vaderknudstraat 7<br>la chasse</p>
+  </div>
+
+  <!-- META + RECEIVER -->
+  <div class="meta-receiver">
+    <div class="meta-box">
+      <table>
+        <tr><td>Datum offerte</td><td id="datum">4/23/2026</td></tr>
+        <tr><td>Citaatrefeventie</td><td id="ref">122</td></tr>
+        <tr><td>Contactpersoon</td><td id="contact">autre donnes</td></tr>
+        <tr><td>Contact client</td><td id="contact-client">Michael Acheteur</td></tr>
+      </table>
+    </div>
+    <div class="receiver">
+      <div class="label">ONTVANGER</div>
+      <div class="company-name" id="receiver-company">Acheteur SA</div>
+      <p id="receiver-details">
+        Michel Acheteur<br>
+        31, rue de la Forêt<br>
+        13100 Aix-en-Provence<br>
+        Lbiadd
+      </p>
+    </div>
+  </div>
+
+  <!-- ADDITIONAL INFO -->
+  <div class="extra-info">
+    <div class="label">Aanvullende informatie</div>
+    <p id="extra-text"></p>
+  </div>
+
+  <!-- ITEMS TABLE -->
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Omschrijving</th>
+        <th>Codes</th>
+        <th>Eenheid</th>
+        <th>Stukprijs</th>
+        <th>Aant</th>
+        <th>Totaal HT</th>
+        <th>Totaal TTC</th>
+      </tr>
+    </thead>
+    <tbody id="items-body">
+      <tr>
+        <td>Main-d'œuvre</td>
+        <td>ASD-GPM</td>
+        <td>stk</td>
+        <td>60.00</td>
+        <td>3</td>
+        <td>210.00</td>
+        <td>210.00</td>
+      </tr>
+      <tr>
+        <td>Produit</td>
+        <td>ASD-GWC</td>
+        <td>stk</td>
+        <td>105.00</td>
+        <td>2</td>
+        <td>210.00</td>
+        <td>210.00</td>
+      </tr>
+      <tr>
+        <td>Produit</td>
+        <td>ASD-GWC</td>
+        <td>stk</td>
+        <td>105.00</td>
+        <td>4</td>
+        <td>420.00</td>
+        <td>420.00</td>
+      </tr>
+      <tr>
+        <td>Produit</td>
+        <td>ASD-GWC</td>
+        <td>stk</td>
+        <td>105.00</td>
+        <td>3</td>
+        <td>315.00</td>
+        <td>315.00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- TOTALS -->
+  <div class="totals">
+    <div class="totals-box">
+      <div class="total-row">
+        <span>Totaal HT</span>
+        <span id="total-ht">1,155.00 l</span>
+      </div>
+      <div class="total-row">
+        <span>Totaal TVA</span>
+        <span id="total-tva">0.00 l</span>
+      </div>
+      <div class="total-row grand">
+        <span>Totaal TTC</span>
+        <span id="total-ttc">1,155.00 €</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNATURE -->
+  <div class="signature">
+    Handtekening van de klant (met vermelding van "Goedgekeurd")
+  </div>
+
+  <!-- SCHEDULE TABLE -->
+  <table class="schedule-table">
+    <thead>
+      <tr>
+        <th>Naam</th>
+        <th>Sofinumm</th>
+        <th>MA</th>
+        <th>DI</th>
+        <th>WO</th>
+        <th>DO</th>
+        <th>VR</th>
+        <th>ZA</th>
+        <th>ZO</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- FOOTER BAR -->
+<div class="footer-bar"></div>
+
+</body>
+</html>

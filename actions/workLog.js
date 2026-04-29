@@ -5,33 +5,34 @@ import { getOrCreateUser } from "./user";
 
 export const createWorkLog = async (payload) => {
   try {
-    const { clientId, startAt, endAt, lieu, modeTarif, prixUnitaire, notes, semaineRef } = payload;
+    const {
+      clientId, startAt, endAt, lieu, modeTarif,
+      prixUnitaire, notes, semaineRef,
+      codes, // ← new
+    } = payload;
 
     if (!clientId || !startAt || !endAt || !modeTarif || !prixUnitaire) {
       return { status: 400, error: "Missing required fields" };
     }
 
     const startDate = new Date(startAt);
-    const endDate = new Date(endAt);
+    const endDate   = new Date(endAt);
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
       return { status: 400, error: "Invalid datetime" };
     }
-
     if (endDate <= startDate) {
       return { status: 400, error: "End datetime must be after start datetime" };
     }
 
-    const diff = (endDate - startDate) / (1000 * 60 * 60);
-
-    const heuresTotal = diff;
-    const montant = modeTarif === "horaire" ? heuresTotal * prixUnitaire : prixUnitaire;
+    const heuresTotal = (endDate - startDate) / (1000 * 60 * 60);
+    const montant     = modeTarif === "horaire" ? heuresTotal * prixUnitaire : prixUnitaire;
 
     const workLog = await prisma.workLog.create({
       data: {
         clientId,
         startAt: startDate,
-        endAt: endDate,
+        endAt:   endDate,
         heuresTotal,
         lieu,
         modeTarif,
@@ -39,6 +40,7 @@ export const createWorkLog = async (payload) => {
         montant,
         notes,
         semaineRef,
+        codes: codes || null, // ← saved
       },
     });
 
@@ -82,13 +84,13 @@ export const getDashboardStats = async (semaineRef, monthDate) => {
     });
 
     const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-    const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999);
+    const endOfMonth   = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999);
 
     const monthlyLogs = await prisma.workLog.findMany({
       where: {
         AND: [
           { startAt: { lte: endOfMonth } },
-          { endAt: { gte: startOfMonth } },
+          { endAt:   { gte: startOfMonth } },
         ],
         client: { ownerId: user.id },
       },
@@ -98,10 +100,7 @@ export const getDashboardStats = async (semaineRef, monthDate) => {
 
     return {
       status: 200,
-      data: {
-        weekly: weeklyLogs,
-        monthly: monthlyLogs,
-      },
+      data: { weekly: weeklyLogs, monthly: monthlyLogs },
     };
   } catch (error) {
     console.log("🔴 getDashboardStats error:", error);
@@ -116,16 +115,12 @@ export const updateWorkLog = async (id, data) => {
     const workLog = await prisma.workLog.findFirst({
       where: { id, client: { ownerId: user.id } },
     });
-
     if (!workLog) return { status: 404, error: "Work log not found" };
-
-    // Recalculate heuresTotal and montant if times changed
-    let heuresTotal = workLog.heuresTotal;
-    let montant     = workLog.montant;
 
     const startAt = data.startAt ? new Date(data.startAt) : workLog.startAt;
     const endAt   = data.endAt   ? new Date(data.endAt)   : workLog.endAt;
 
+    let heuresTotal = workLog.heuresTotal;
     if (data.startAt || data.endAt) {
       heuresTotal = (endAt - startAt) / (1000 * 60 * 60);
     }
@@ -135,13 +130,7 @@ export const updateWorkLog = async (id, data) => {
       : workLog.prixUnitaire;
 
     const modeTarif = data.modeTarif || workLog.modeTarif;
-
-    if (modeTarif === "horaire") {
-      montant = heuresTotal * prixUnitaire;
-    } else {
-      // forfait: montant = prixUnitaire directly
-      montant = prixUnitaire;
-    }
+    const montant   = modeTarif === "horaire" ? heuresTotal * prixUnitaire : prixUnitaire;
 
     const updated = await prisma.workLog.update({
       where: { id },
@@ -152,9 +141,10 @@ export const updateWorkLog = async (id, data) => {
         montant,
         prixUnitaire,
         modeTarif,
-        lieu:      data.lieu      !== undefined ? data.lieu      : workLog.lieu,
-        notes:     data.notes     !== undefined ? data.notes     : workLog.notes,
+        lieu:       data.lieu       !== undefined ? data.lieu       : workLog.lieu,
+        notes:      data.notes      !== undefined ? data.notes      : workLog.notes,
         semaineRef: data.semaineRef || workLog.semaineRef,
+        codes:      data.codes      !== undefined ? data.codes      : workLog.codes, // ← updated
       },
       include: { client: true },
     });
@@ -173,11 +163,9 @@ export const deleteWorkLog = async (id) => {
     const workLog = await prisma.workLog.findFirst({
       where: { id, client: { ownerId: user.id } },
     });
-
     if (!workLog) return { status: 404, error: "Work log not found" };
 
     await prisma.workLog.delete({ where: { id } });
-
     return { status: 200 };
   } catch (error) {
     console.log("🔴 deleteWorkLog error:", error);

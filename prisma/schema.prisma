@@ -7,126 +7,128 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String?  // Ajouté pour l'auth locale
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  name       String
+  Sofinummer String
+  telephone  String
+  adresse    String
+  kvknr      String?
+  email      String   @unique
+  password   String? // Ajouté pour l'auth locale
+  createdAt  DateTime @default(now())
 
-  clients   Client[]
+  clients Client[]
 }
 
 model Client {
-  id          String    @id @default(uuid())
-  ownerId     String
-  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  nom         String
-  email       String
-  telephone   String?
-  adresse     String?
-  kvknr       String?
-  btwnr       String?
+  nom       String
+  email     String
+  telephone String?
+  adresse   String?
+  kvknr     String?
+  btwnr     String?
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  workLogs    WorkLog[]
-  devis       Devis[]
-  factures    Facture[]
+  workLogs WorkLog[]
+  devis    Devis[]
+  factures Facture[]
 
   @@index([ownerId])
 }
 
 model WorkLog {
-  id            String   @id @default(uuid())
-  clientId      String
-  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  codes       String
+  startAt      DateTime
+  endAt        DateTime
+  heuresTotal  Float
+  lieu         String?
+  modeTarif    String // "horaire" | "forfait"
+  prixUnitaire Float
+  montant      Float
+  notes        String?
+  semaineRef   String // ex: "2025-W03"
 
-  startAt       DateTime
-  endAt         DateTime
-  heuresTotal   Float
-  lieu          String?
-  modeTarif     String   // "horaire" | "forfait"
-  prixUnitaire  Float
-  montant       Float
-  notes         String?
-  semaineRef    String   // ex: "2025-W03"
+  createdAt DateTime @default(now())
 
-  createdAt     DateTime @default(now())
-
-  devisLignes   DevisLigne[]
+  devisLignes DevisLigne[]
 
   @@index([clientId])
 }
 
 model Devis {
-  id            String    @id @default(uuid())
-  clientId      String
-  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  numero        String    @unique // ex: "DEV-2025-001"
-  semaineRef    String    // ex: "2025-W03"
-  dateEmission  DateTime
-  statut        String    @default("brouillon") // "brouillon" | "envoye" | "accepte" | "refuse" | "archive"
+  numero       String   @unique // ex: "DEV-2025-001"
+  semaineRef   String // ex: "2025-W03"
+  dateEmission DateTime
+  statut       String   @default("brouillon") // "brouillon" | "envoye" | "accepte" | "refuse" | "archive"
 
-  totalHt       Float
-  tauxTva       Float     @default(20.0)
-  totalTva      Float
-  totalTtc      Float
+  total        Float
 
-  fichierExcel  String?   // Chemin vers le fichier
-  notes         String?
-  envoyeAt      DateTime?
+  fichierExcel String? // Chemin vers le fichier
+  notes        String?
+  envoyeAt     DateTime?
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  lignes        DevisLigne[]
-  factures      Facture[]
+  lignes   DevisLigne[]
+  factures Facture[]
 
   @@index([clientId])
 }
 
 model DevisLigne {
-  id            String   @id @default(uuid())
-  devisId       String
-  devis         Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  devisId String
+  devis   Devis  @relation(fields: [devisId], references: [id], onDelete: Cascade)
 
-  workLogId     String?
-  workLog       WorkLog? @relation(fields: [workLogId], references: [id])
+  workLogId String?
+  workLog   WorkLog? @relation(fields: [workLogId], references: [id])
 
-  description   String
-  quantite      Float
-  unite         String   // "heure" | "forfait"
-  prixUnitaire  Float
-  montantHt     Float
+  description  String
+  quantite     Float
+  unite        String // "heure" | "forfait"
+  prixUnitaire Float
+  montantHt    Float
+  codes        String?
 
   @@index([devisId])
   @@index([workLogId])
 }
 
 model Facture {
-  id            String    @id @default(uuid())
-  devisId       String
-  devis         Devis     @relation(fields: [devisId], references: [id])
-  clientId      String
-  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  devisId  String
+  devis    Devis  @relation(fields: [devisId], references: [id])
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  numero        String    @unique // ex: "FAC-2025-001"
-  dateEmission  DateTime
-  dateEcheance  DateTime
-  statut        String    @default("generee") // "generee" | "envoyee" | "payee" | "en_retard"
+  numero       String   @unique // ex: "FAC-2025-001"
+  dateEmission DateTime
+  dateEcheance DateTime
+  statut       String   @default("generee") // "generee" | "envoyee" | "payee" | "en_retard"
 
-  totalHt       Float
-  tauxTva       Float     @default(20.0)
-  totalTva      Float
-  totalTtc      Float
+  totalHt  Float
+  tauxTva  Float @default(20.0)
+  totalTva Float
+  totalTtc Float
 
-  fichierPdf    String?   // Chemin vers le PDF
-  envoyeAt      DateTime?
-  payeAt        DateTime?
+  fichierPdf String? // Chemin vers le PDF
+  envoyeAt   DateTime?
+  payeAt     DateTime?
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([devisId])
   @@index([clientId])

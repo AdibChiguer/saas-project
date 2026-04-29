@@ -11,10 +11,11 @@ export default function SignupPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    const form = new FormData(e.currentTarget);
+    setError("");
 
+    const form = new FormData(e.currentTarget);
     const password = form.get("password");
-    const confirm = form.get("confirm");
+    const confirm  = form.get("confirm");
 
     if (password !== confirm) {
       setError("Les mots de passe ne correspondent pas");
@@ -25,7 +26,15 @@ export default function SignupPage() {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: form.get("email"), password }),
+      body: JSON.stringify({
+        email:      form.get("email"),
+        password,
+        name:       form.get("name"),
+        Sofinummer: form.get("Sofinummer"),
+        telephone:  form.get("telephone"),
+        adresse:    form.get("adresse"),
+        kvknr:      form.get("kvknr") || undefined,
+      }),
     });
 
     if (!res.ok) {
@@ -39,7 +48,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
+      <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
 
         {/* Icon */}
         <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mb-6">
@@ -52,8 +61,86 @@ export default function SignupPage() {
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Commencez gratuitement dès aujourd'hui.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* ── Identity ── */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                Nom complet <span className="text-red-400">*</span>
+              </label>
+              <input
+                name="name"
+                type="text"
+                placeholder="Jean Dupont"
+                required
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                Sofinummer <span className="text-red-400">*</span>
+              </label>
+              <input
+                name="Sofinummer"
+                type="text"
+                placeholder="123456789"
+                required
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                Téléphone <span className="text-red-400">*</span>
+              </label>
+              <input
+                name="telephone"
+                type="tel"
+                placeholder="+32 470 00 00 00"
+                required
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                Adresse <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                name="adresse"
+                rows={2}
+                placeholder="Rue de la Paix 1, 1000 Bruxelles"
+                required
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                KVK-nummer <span className="text-slate-400 font-normal">(optionnel)</span>
+              </label>
+              <input
+                name="kvknr"
+                type="text"
+                placeholder="12345678"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+          </div>
+
+          {/* ── Divider ── */}
+          <div className="flex items-center gap-3 py-1">
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+            <span className="text-xs text-slate-400 font-medium">Connexion</span>
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+          </div>
+
+          {/* ── Auth ── */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Email</label>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+              Email <span className="text-red-400">*</span>
+            </label>
             <input
               name="email"
               type="email"
@@ -63,34 +150,42 @@ export default function SignupPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Mot de passe</label>
-            <input
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              required
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                Mot de passe <span className="text-red-400">*</span>
+              </label>
+              <input
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                required
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                Confirmer <span className="text-red-400">*</span>
+              </label>
+              <input
+                name="confirm"
+                type="password"
+                placeholder="••••••••"
+                required
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Confirmer le mot de passe</label>
-            <input
-              name="confirm"
-              type="password"
-              placeholder="••••••••"
-              required
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            />
-          </div>
-
+          {/* ── Error ── */}
           {error && (
             <p className="text-xs font-medium text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">
               {error}
             </p>
           )}
 
+          {/* ── Submit ── */}
           <button
             type="submit"
             disabled={loading}
