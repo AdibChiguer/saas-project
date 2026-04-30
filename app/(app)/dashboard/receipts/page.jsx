@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllFactures, getFactureById } from "@/actions/billing";
+import { getOrCreateUser } from "@/actions/user";
 import { exportFactureToPDF } from "@/lib/docs";
 
 export default function FacturesPage() {
@@ -19,7 +20,12 @@ export default function FacturesPage() {
 
   async function handleDownload(id) {
     const res = await getFactureById(id);
-    if (res.status === 200) {
+    const userRes = await getOrCreateUser();
+
+    if (res.status === 200 && userRes.status === 200) {
+      exportFactureToPDF(res.data, userRes.user);
+    } else if (res.status === 200) {
+      // Fallback if user data fetch fails
       exportFactureToPDF(res.data);
     }
   }

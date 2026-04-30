@@ -2,6 +2,7 @@
 
 import { generateDevisFromWeek, updateDevisStatus, getAllDevis } from "@/actions/billing";
 import { getAllClients } from "@/actions/client";
+import { getOrCreateUser } from "@/actions/user";
 import { exportDevisToExcel } from "@/lib/docs";
 import { generateDevisPDF } from "@/actions/devis"; 
 import { useEffect, useState, useCallback } from "react";
@@ -107,6 +108,15 @@ export default function DevisPage() {
     URL.revokeObjectURL(url);
 
     setDownloadingId(null);
+  }
+
+  async function handleDownloadExcel(devis) {
+    const userRes = await getOrCreateUser();
+    if (userRes.status === 200) {
+      exportDevisToExcel(devis, userRes.user);
+    } else {
+      exportDevisToExcel(devis);
+    }
   }
 
   return (
@@ -253,7 +263,7 @@ export default function DevisPage() {
 
                           {/* Excel export — unchanged */}
                           <button
-                            onClick={() => exportDevisToExcel(devis)}
+                            onClick={() => handleDownloadExcel(devis)}
                             title="Exporter en Excel"
                             className="p-1.5 md:p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg md:rounded-xl transition-all"
                           >

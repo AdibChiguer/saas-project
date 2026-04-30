@@ -53,7 +53,11 @@ function ligneFromLog(log) {
 export const generateDevisFromWeek = async (semaineRef) => {
   console.log("semaineRef:", semaineRef);
   try {
-    const { user } = await getOrCreateUser();
+    const res = await getOrCreateUser();
+    if (res.status !== 200) {
+      return res;
+    }
+    const user = res.user;
 
     // 1. Get all worklogs for the week not yet linked to a devis ligne
     const workLogs = await prisma.workLog.findMany({
@@ -206,32 +210,23 @@ export const generateFactureFromDevis = async (devisId) => {
       where: { id: devisId },
       include: { client: true },
     });
+
     if (!devis) return { status: 404, error: "Devis not found" };
 
-    // devis.total is treated as HT — derive TVA/TTC
-    const tauxTva  = 20.0;
-    const totalHt  = devis.total;
-    const totalTva = totalHt * (tauxTva / 100);
-    const totalTtc = totalHt + totalTva;
-
-    const count        = await prisma.facture.count();
-    const numero       = `FAC-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
-    const dateEmission = new Date();
-    const dateEcheance = new Date();
-    dateEcheance.setDate(dateEmission.getDate() + 30);
+    const count  = await prisma.facture.count();
+    const numero = `FAC-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
 
     const facture = await prisma.facture.create({
       data: {
-        devisId,
+        devisId:      devis.id,
         clientId:     devis.clientId,
         numero,
-        dateEmission,
-        dateEcheance,
+        dateEmission: new Date(),
+        dateEcheance: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         statut:       "generee",
-        totalHt,
-        tauxTva,
-        totalTva,
-        totalTtc,
+        totalHt:      devis.total,
+        totalTva:     devis.total * 0.2, // Default 20%
+        totalTtc:     devis.total * 1.2,
       },
     });
 
@@ -242,11 +237,10 @@ export const generateFactureFromDevis = async (devisId) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 export const getAllFactures = async () => {
   try {
     const factures = await prisma.facture.findMany({
-      include: { client: true },
+      include: { client: true, devis: true },
       orderBy: { dateEmission: "desc" },
     });
     return { status: 200, data: factures };

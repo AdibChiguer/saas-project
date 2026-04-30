@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: saas-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ubuntuKALI
+      POSTGRES_DB: saasdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

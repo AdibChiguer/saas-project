@@ -70,6 +70,15 @@ export default function Dashboard() {
   const totalMonthlyHours = stats.monthly.reduce((acc, log) => acc + log.heuresTotal, 0);
   const totalWeeklyAmount = stats.weekly.reduce((acc, log) => acc + log.montant, 0);
 
+  const handleDelete = async (id) => {
+    if (confirm("Voulez-vous vraiment supprimer cette saisie ?")) {
+      const res = await deleteWorkLog(id);
+      if (res.status === 200) {
+        fetchData();
+      }
+    }
+  };
+
   if (status === "loading") return null;
 
   return (
@@ -176,40 +185,48 @@ export default function Dashboard() {
                       </div>
                     </div>
                     
-                    <div className="flex-1 w-full sm:w-auto">
+                    <div className="flex-1 w-full sm:w-auto min-w-0">
                       <div className="hidden sm:flex items-center gap-3">
-                        <h4 className="font-bold text-lg text-slate-900">{log.client.nom}</h4>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-full">
+                        <h4 className="font-bold text-lg text-slate-900 truncate">{log.client.nom}</h4>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-full shrink-0">
                           {log.modeTarif}
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-1 sm:mt-2 text-xs md:text-sm font-medium text-slate-400">
-                        <span className="flex items-center gap-1.5">
+                        <span className="flex items-center gap-1.5 shrink-0">
                           <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" />
                           {start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — {end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <span className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                          {log.lieu || "Remote"}
+                        <span className="flex items-center gap-1.5 truncate">
+                          <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                          <span className="truncate">{log.lieu || "Remote"}</span>
                         </span>
                       </div>
                       {log.notes && (
-                        <div className="mt-2 md:mt-3 bg-slate-50 px-3 py-1.5 rounded-lg inline-block w-full sm:w-auto">
-                          <p className="text-[10px] md:text-xs text-slate-400 font-medium italic truncate">"{log.notes}"</p>
+                        <div className="mt-2 md:mt-3 bg-slate-50 px-3 py-1.5 rounded-lg w-full">
+                          <p className="text-[10px] md:text-xs text-slate-400 font-medium italic truncate block">
+                            "{log.notes}"
+                          </p>
                         </div>
                       )}
                     </div>
 
-                    <div className="hidden sm:block text-right shrink-0">
-                      <p className="text-xl md:text-2xl font-black text-slate-900">{log.montant.toLocaleString()} €</p>
+                    <div className="hidden sm:block text-right shrink-0 ml-auto">
+                      <p className="text-xl md:text-2xl font-black text-slate-900">{(log.montant || 0).toLocaleString()} €</p>
                       <p className="text-[10px] md:text-xs font-bold text-blue-500 mt-1">{log.heuresTotal}h — {log.prixUnitaire}€/{log.modeTarif === 'horaire' ? 'h' : 'forfait'}</p>
                     </div>
 
-                    <div className="flex sm:flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="flex-1 sm:flex-none p-2 bg-slate-50 sm:bg-transparent hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-500 transition-all flex justify-center">
+                    <div className="flex sm:flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
+                      <button 
+                        onClick={() => router.push(`/dashboard/work-log?edit=${log.id}`)}
+                        className="flex-1 sm:flex-none p-2 bg-slate-50 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-500 transition-all flex justify-center"
+                      >
                         <Pencil className="w-4 h-4" />
                       </button>
-                      <button className="flex-1 sm:flex-none p-2 bg-slate-50 sm:bg-transparent hover:bg-slate-100 rounded-lg text-slate-400 hover:text-red-500 transition-all flex justify-center">
+                      <button 
+                        onClick={() => handleDelete(log.id)}
+                        className="flex-1 sm:flex-none p-2 bg-slate-50 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-all flex justify-center"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

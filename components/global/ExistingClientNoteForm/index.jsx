@@ -1,7 +1,7 @@
 "use client";
 
 import { getAllClients } from "@/actions/client";
-import { createWorkLog } from "@/actions/workLog";
+import { createWorkLog, getWorkLogById, updateWorkLog } from "@/actions/workLog";
 import { useEffect, useState, useCallback } from "react";
 import NewClientForm from "@/components/global/NewClientForm";
 import TimePicker24h from "@/components/global/TimePicker24h";
@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { Clock, Users, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const WorkLogForm = ({ initialClientId }) => {
+const WorkLogForm = ({ initialClientId, editId }) => {
   const router = useRouter();
   const [clients, setClients]                   = useState([]);
   const [clientId, setClientId]                 = useState(initialClientId || "");
@@ -22,8 +22,9 @@ const WorkLogForm = ({ initialClientId }) => {
   const defaultEndAt = new Date(defaultStartAt.getTime() + 60 * 60 * 1000);
 
   const toLocalInputValue = (date) => {
+    const d = new Date(date);
     const pad = (n) => String(n).padStart(2, "0");
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
   const [startAt, setStartAt]           = useState(toLocalInputValue(defaultStartAt));
@@ -36,6 +37,7 @@ const WorkLogForm = ({ initialClientId }) => {
   const [loading, setLoading]           = useState(false);
 
   const splitDateTime = (dt) => {
+    if (!dt) return { date: "", time: "" };
     const [date, time] = dt.split("T");
     return { date, time };
   };
@@ -55,7 +57,26 @@ const WorkLogForm = ({ initialClientId }) => {
     if (res.status === 200) setClients(res.data);
   }, []);
 
-  useEffect(() => { fetchClients(); }, [fetchClients]);
+  const fetchWorkLog = useCallback(async () => {
+    if (!editId) return;
+    const res = await getWorkLogById(editId);
+    if (res.status === 200) {
+      const log = res.data;
+      setClientId(log.clientId);
+      setStartAt(toLocalInputValue(log.startAt));
+      setEndAt(toLocalInputValue(log.endAt));
+      setLieu(log.lieu || "");
+      setModeTarif(log.modeTarif);
+      setPrixUnitaire(log.prixUnitaire);
+      setNotes(log.notes || "");
+      setCodes(log.codes || "");
+    }
+  }, [editId]);
+
+  useEffect(() => { 
+    fetchClients(); 
+    if (editId) fetchWorkLog();
+  }, [fetchClients, fetchWorkLog, editId]);
 
   const onClientCreated = (newId) => {
     fetchClients();
@@ -97,7 +118,7 @@ const WorkLogForm = ({ initialClientId }) => {
 
     setLoading(true);
     try {
-      const res = await createWorkLog({
+      const payload = {
         clientId,
         startAt:    startDate.toISOString(),
         endAt:      endDate.toISOString(),
@@ -105,18 +126,22 @@ const WorkLogForm = ({ initialClientId }) => {
         modeTarif,
         prixUnitaire,
         notes,
-        codes,                          // ← passed through
+        codes,
         semaineRef: getWeekRef(startDate),
-      });
+      };
 
-      if (res.status === 201) {
-        toast.success("Note de travail enregistrée avec succès !");
+      const res = editId 
+        ? await updateWorkLog(editId, payload)
+        : await createWorkLog(payload);
+
+      if (res.status === 201 || res.status === 200) {
+        toast.success(editId ? "Note de travail mise à jour !" : "Note de travail enregistrée !");
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
         toast.error("Erreur: " + res.error);
       }
     } catch {
-      toast.error("Une erreur est survenue lors de l'enregistrement");
+      toast.error("Une erreur est survenue");
     } finally {
       setLoading(false);
     }
