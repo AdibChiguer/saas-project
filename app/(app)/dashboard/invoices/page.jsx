@@ -4,7 +4,7 @@ import { generateDevisFromWeek, updateDevisStatus, getAllDevis } from "@/actions
 import { getAllClients } from "@/actions/client";
 import { getOrCreateUser } from "@/actions/user";
 import { exportDevisToExcel } from "@/lib/docs";
-import { generateDevisPDF } from "@/actions/devis"; 
+import { generateDevisPDF } from "@/actions/devis_facture"; 
 import { useEffect, useState, useCallback } from "react";
 import { 
   Calendar, 

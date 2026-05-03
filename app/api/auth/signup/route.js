@@ -5,9 +5,9 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req) {
   const body = await req.json();
-  const { email, password, name, Sofinummer, telephone, adresse, kvknr } = body;
+  const { email, password, name, Sofinummer, telephone, adresse, kvknr, Iban } = body;
 
-  // ── Validate required fields ────────────────────────────────────
+  // ── Validate all required fields (matches schema: all non-optional) ──
   const missing = [];
   if (!email)      missing.push("email");
   if (!password)   missing.push("mot de passe");
@@ -15,6 +15,8 @@ export async function POST(req) {
   if (!Sofinummer) missing.push("Sofinummer");
   if (!telephone)  missing.push("téléphone");
   if (!adresse)    missing.push("adresse");
+  if (!kvknr)      missing.push("KVK-nummer");
+  if (!Iban)       missing.push("IBAN");
 
   if (missing.length > 0) {
     return NextResponse.json(
@@ -23,13 +25,13 @@ export async function POST(req) {
     );
   }
 
-  // ── Check for duplicate email ────────────────────────────────────
+  // ── Check for duplicate email ─────────────────────────────────────
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return NextResponse.json({ error: "Email déjà utilisé" }, { status: 409 });
   }
 
-  // ── Hash password + create user ──────────────────────────────────
+  // ── Hash password + create user ───────────────────────────────────
   const hashed = await bcrypt.hash(password, 12);
 
   const user = await prisma.user.create({
@@ -40,7 +42,8 @@ export async function POST(req) {
       Sofinummer,
       telephone,
       adresse,
-      kvknr: kvknr || null,   // optional field
+      kvknr,   // required in schema
+      Iban,    // ← new required field
     },
   });
 

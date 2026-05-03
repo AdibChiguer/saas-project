@@ -13,11 +13,11 @@ model User {
   Sofinummer String
   telephone  String
   adresse    String
-  kvknr      String?
+  kvknr      String
   email      String   @unique
-  password   String? // Ajouté pour l'auth locale
+  password   String // Ajouté pour l'auth locale
   createdAt  DateTime @default(now())
-
+  Iban       String
   clients Client[]
 }
 
