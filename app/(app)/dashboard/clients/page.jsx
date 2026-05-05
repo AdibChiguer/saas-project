@@ -3,6 +3,7 @@
 import { getAllClients, updateClient, deleteClient } from "@/actions/client";
 import { useEffect, useState } from "react";
 import NewClientForm from "@/components/global/NewClientForm";
+import { useLanguage } from "@/context/LanguageContext";
 import { 
   User, Mail, Phone, MapPin, Hash, Building2, 
   Search, Edit2, Trash2, X, Loader2, Save, Users, Plus
@@ -25,6 +26,7 @@ const InputField = ({ icon: Icon, placeholder, type = "text", value, onChange })
 );
 
 export default function ClientsPage() {
+  const { t } = useLanguage();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,7 +46,7 @@ export default function ClientsPage() {
         setClients(res.data);
       }
     } catch (error) {
-      toast.error("Erreur lors du chargement des clients");
+      toast.error(t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -52,36 +54,36 @@ export default function ClientsPage() {
 
   const handleUpdate = async () => {
     if (!editingClient.nom) {
-      toast.error("Le nom est obligatoire");
+      toast.error(t("clients.name_required"));
       return;
     }
     setSaving(true);
     try {
       const res = await updateClient(editingClient.id, editingClient);
       if (res.status === 200) {
-        toast.success("Client mis à jour");
+        toast.success(t("clients.update_success"));
         setEditingClient(null);
         fetchClients();
       } else {
-        toast.error("Erreur: " + res.error);
+        toast.error(t("common.error") + ": " + res.error);
       }
     } catch (error) {
-      toast.error("Une erreur est survenue");
+      toast.error(t("common.error"));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer ce client ?")) {
+    if (confirm(t("clients.delete_confirm"))) {
       try {
         const res = await deleteClient(id);
         if (res.status === 200) {
-          toast.success("Client supprimé");
+          toast.success(t("clients.delete_success"));
           fetchClients();
         }
       } catch (error) {
-        toast.error("Erreur lors de la suppression");
+        toast.error(t("common.error"));
       }
     }
   };
@@ -98,9 +100,9 @@ export default function ClientsPage() {
         <div>
           <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
             <Users className="w-8 h-8 text-blue-600" />
-            Gestion des Clients
+            {t("clients.title")}
           </h1>
-          <p className="text-slate-500 font-medium mt-1">Consultez et modifiez les informations de vos clients.</p>
+          <p className="text-slate-500 font-medium mt-1">{t("clients.subtitle")}</p>
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -108,7 +110,7 @@ export default function ClientsPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors w-5 h-5" />
             <input
               type="text"
-              placeholder="Rechercher un client..."
+              placeholder={t("clients.search_placeholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white border border-slate-200 p-4 pl-12 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-slate-900 shadow-sm"
@@ -120,7 +122,7 @@ export default function ClientsPage() {
             className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
           >
             <Plus className="w-5 h-5" />
-            Ajouter un Client
+            {t("clients.add_button")}
           </button>
         </div>
       </div>
@@ -129,7 +131,7 @@ export default function ClientsPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-500 font-bold">Chargement des clients...</p>
+          <p className="text-slate-500 font-bold">{t("clients.loading")}</p>
         </div>
       ) : filteredClients.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -163,11 +165,11 @@ export default function ClientsPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-slate-600 font-medium">
                   <Phone className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm">{client.telephone || "N/A"}</span>
+                  <span className="text-sm">{client.telephone || t("common.none")}</span>
                 </div>
                 <div className="flex items-start gap-3 text-slate-600 font-medium">
                   <MapPin className="w-4 h-4 text-slate-400 mt-1" />
-                  <span className="text-sm line-clamp-1">{client.adresse || "N/A"}</span>
+                  <span className="text-sm line-clamp-1">{client.adresse || t("common.none")}</span>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
                   <div>
@@ -188,8 +190,8 @@ export default function ClientsPage() {
           <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users className="w-10 h-10 text-slate-300" />
           </div>
-          <h3 className="text-xl font-black text-slate-900">Aucun client trouvé</h3>
-          <p className="text-slate-500 font-medium mt-2">Essayez une autre recherche ou créez un nouveau client.</p>
+          <h3 className="text-xl font-black text-slate-900">{t("clients.no_clients")}</h3>
+          <p className="text-slate-500 font-medium mt-2">{t("clients.no_clients_subtitle")}</p>
         </div>
       )}
 
@@ -200,8 +202,8 @@ export default function ClientsPage() {
           <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-8 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">Modifier le Client</h2>
-                <p className="text-slate-500 font-bold text-sm">Mise à jour des informations de {editingClient.nom}</p>
+                <h2 className="text-2xl font-black text-slate-900">{t("clients.edit_title")}</h2>
+                <p className="text-slate-500 font-bold text-sm">{t("clients.edit_subtitle")} {editingClient.nom}</p>
               </div>
               <button 
                 onClick={() => setEditingClient(null)}
@@ -214,20 +216,20 @@ export default function ClientsPage() {
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">Nom</label>
-                  <InputField icon={User} placeholder="Nom du client" value={editingClient.nom} onChange={(e) => setEditingClient({...editingClient, nom: e.target.value})} />
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">{t("common.name")}</label>
+                  <InputField icon={User} placeholder={t("common.name")} value={editingClient.nom} onChange={(e) => setEditingClient({...editingClient, nom: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">Email</label>
-                  <InputField icon={Mail} placeholder="Email" type="email" value={editingClient.email} onChange={(e) => setEditingClient({...editingClient, email: e.target.value})} />
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">{t("common.email")}</label>
+                  <InputField icon={Mail} placeholder={t("common.email")} type="email" value={editingClient.email} onChange={(e) => setEditingClient({...editingClient, email: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">Téléphone</label>
-                  <InputField icon={Phone} placeholder="Téléphone" value={editingClient.telephone} onChange={(e) => setEditingClient({...editingClient, telephone: e.target.value})} />
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">{t("common.phone")}</label>
+                  <InputField icon={Phone} placeholder={t("common.phone")} value={editingClient.telephone} onChange={(e) => setEditingClient({...editingClient, telephone: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">Adresse</label>
-                  <InputField icon={MapPin} placeholder="Adresse" value={editingClient.adresse} onChange={(e) => setEditingClient({...editingClient, adresse: e.target.value})} />
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">{t("common.address")}</label>
+                  <InputField icon={MapPin} placeholder={t("common.address")} value={editingClient.adresse} onChange={(e) => setEditingClient({...editingClient, adresse: e.target.value})} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-wider text-slate-400 ml-4">KVK Nummer</label>
@@ -246,13 +248,13 @@ export default function ClientsPage() {
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  {saving ? "Enregistrement..." : "Sauvegarder"}
+                  {saving ? t("common.saving") : t("common.save")}
                 </button>
                 <button
                   onClick={() => setEditingClient(null)}
                   className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 p-4 rounded-2xl font-black transition-all active:scale-95"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -267,8 +269,8 @@ export default function ClientsPage() {
           <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-8 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">Nouveau Client</h2>
-                <p className="text-slate-500 font-bold text-sm">Ajoutez un nouveau client à votre base de données.</p>
+                <h2 className="text-2xl font-black text-slate-900">{t("clients.add_title")}</h2>
+                <p className="text-slate-500 font-bold text-sm">{t("clients.add_subtitle")}</p>
               </div>
               <button 
                 onClick={() => setIsAddingClient(false)}

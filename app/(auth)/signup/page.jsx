@@ -2,9 +2,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +20,7 @@ export default function SignupPage() {
     const confirm  = form.get("confirm");
 
     if (password !== confirm) {
-      setError("Les mots de passe ne correspondent pas");
+      setError(t("auth.password_mismatch") || "Les mots de passe ne correspondent pas");
       setLoading(false);
       return;
     }
@@ -34,7 +36,7 @@ export default function SignupPage() {
         telephone:  form.get("telephone"),
         adresse:    form.get("adresse"),
         kvknr:      form.get("kvknr"),
-        Iban:       form.get("Iban"),   // ← new
+        Iban:       form.get("Iban"),
       }),
     });
 
@@ -57,8 +59,8 @@ export default function SignupPage() {
           </svg>
         </div>
 
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Créer un compte</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Commencez gratuitement dès aujourd'hui.</p>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{t("auth.signup_title")}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t("auth.signup_subtitle")}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -67,7 +69,7 @@ export default function SignupPage() {
             {/* Nom */}
             <div className="col-span-2">
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                Nom complet <span className="text-red-400">*</span>
+                {t("auth.name")} <span className="text-red-400">*</span>
               </label>
               <input name="name" type="text" placeholder="Jean Dupont" required
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -77,7 +79,7 @@ export default function SignupPage() {
             {/* Sofinummer */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                Sofinummer <span className="text-red-400">*</span>
+                {t("pdf.sofi")} <span className="text-red-400">*</span>
               </label>
               <input name="Sofinummer" type="text" placeholder="123456789" required
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -87,7 +89,7 @@ export default function SignupPage() {
             {/* Téléphone */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                Téléphone <span className="text-red-400">*</span>
+                {t("common.phone")} <span className="text-red-400">*</span>
               </label>
               <input name="telephone" type="tel" placeholder="+32 470 00 00 00" required
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -97,7 +99,7 @@ export default function SignupPage() {
             {/* Adresse */}
             <div className="col-span-2">
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                Adresse <span className="text-red-400">*</span>
+                {t("common.address")} <span className="text-red-400">*</span>
               </label>
               <textarea name="adresse" rows={2} placeholder="Vaderknuidstraat 7, 1121XN Landsmeer" required
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
@@ -114,7 +116,7 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* IBAN ← new */}
+            {/* IBAN */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
                 IBAN <span className="text-red-400">*</span>
@@ -129,14 +131,14 @@ export default function SignupPage() {
           {/* Divider */}
           <div className="flex items-center gap-3 py-1">
             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-            <span className="text-xs text-slate-400 font-medium">Connexion</span>
+            <span className="text-xs text-slate-400 font-medium">{t("auth.login_title")}</span>
             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
           </div>
 
           {/* Email */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-              Email <span className="text-red-400">*</span>
+              {t("auth.email")} <span className="text-red-400">*</span>
             </label>
             <input name="email" type="email" placeholder="vous@exemple.com" required
               className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -147,7 +149,7 @@ export default function SignupPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                Mot de passe <span className="text-red-400">*</span>
+                {t("auth.password")} <span className="text-red-400">*</span>
               </label>
               <input name="password" type="password" placeholder="••••••••" required
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -155,7 +157,7 @@ export default function SignupPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                Confirmer <span className="text-red-400">*</span>
+                {t("auth.confirm_password") || "Confirmer"} <span className="text-red-400">*</span>
               </label>
               <input name="confirm" type="password" placeholder="••••••••" required
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -172,14 +174,14 @@ export default function SignupPage() {
           <button type="submit" disabled={loading}
             className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold py-2.5 rounded-xl text-sm hover:bg-slate-700 dark:hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Création..." : "Créer mon compte"}
+            {loading ? t("auth.signing_up") : t("auth.signup_button")}
           </button>
         </form>
 
         <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-          Déjà un compte ?{" "}
+          {t("auth.has_account")}{" "}
           <Link href="/login" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-            Se connecter
+            {t("auth.login_link")}
           </Link>
         </p>
       </div>

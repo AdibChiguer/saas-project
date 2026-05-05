@@ -3,9 +3,11 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +23,7 @@ export default function LoginPage() {
     });
 
     if (res?.error) {
-      setError("Email ou mot de passe incorrect");
+      setError(t("auth.login_error"));
       setLoading(false);
     } else {
       router.push("/dashboard");
@@ -39,12 +41,12 @@ export default function LoginPage() {
           </svg>
         </div>
 
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Connexion</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Content de vous revoir.</p>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{t("auth.login_title")}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t("auth.login_subtitle")}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Email</label>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">{t("auth.email")}</label>
             <input
               name="email"
               type="email"
@@ -55,7 +57,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Mot de passe</label>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">{t("auth.password")}</label>
             <input
               name="password"
               type="password"
@@ -76,14 +78,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold py-2.5 rounded-xl text-sm hover:bg-slate-700 dark:hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading ? t("auth.logging_in") : t("auth.login_button")}
           </button>
         </form>
 
         <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-          Pas encore de compte ?{" "}
+          {t("auth.no_account")}{" "}
           <Link href="/signup" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-            Créer un compte
+            {t("auth.create_account")}
           </Link>
         </p>
       </div>

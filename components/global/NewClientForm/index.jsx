@@ -4,6 +4,7 @@ import { createClient } from "@/actions/client";
 import { useState } from "react";
 import { User, Mail, Phone, MapPin, Hash, Building2, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ── Defined OUTSIDE NewClientForm so it's never re-created on each render ──
 const InputField = ({ icon: Icon, placeholder, type = "text", value, onChange }) => (
@@ -22,6 +23,7 @@ const InputField = ({ icon: Icon, placeholder, type = "text", value, onChange })
 );
 
 const NewClientForm = ({ onCreated }) => {
+  const { t } = useLanguage();
   const [nom, setNom]           = useState("");
   const [email, setEmail]       = useState("");
   const [telephone, setTelephone] = useState("");
@@ -32,7 +34,7 @@ const NewClientForm = ({ onCreated }) => {
 
   async function handleSubmit() {
     if (!nom) {
-      toast.error("Le nom du client est obligatoire");
+      toast.error(t("clients.name_required"));
       return;
     }
     setLoading(true);
@@ -40,12 +42,12 @@ const NewClientForm = ({ onCreated }) => {
       const res = await createClient({ nom, email, telephone, adresse, kvknr, btwnr });
       if (res.status === 201) {
         onCreated(res.data.id);
-        toast.success("Client créé avec succès");
+        toast.success(t("common.success"));
       } else {
-        toast.error("Erreur: " + res.error);
+        toast.error(t("common.error") + ": " + res.error);
       }
     } catch {
-      toast.error("Une erreur est survenue");
+      toast.error(t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -54,10 +56,10 @@ const NewClientForm = ({ onCreated }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <InputField icon={User}      placeholder="Nom du client" value={nom}       onChange={(e) => setNom(e.target.value)} />
-        <InputField icon={Mail}      placeholder="Email"         type="email" value={email}     onChange={(e) => setEmail(e.target.value)} />
-        <InputField icon={Phone}     placeholder="Téléphone"     value={telephone} onChange={(e) => setTelephone(e.target.value)} />
-        <InputField icon={MapPin}    placeholder="Adresse"       value={adresse}   onChange={(e) => setAdresse(e.target.value)} />
+        <InputField icon={User}      placeholder={t("common.name")} value={nom}       onChange={(e) => setNom(e.target.value)} />
+        <InputField icon={Mail}      placeholder={t("common.email")} type="email" value={email}     onChange={(e) => setEmail(e.target.value)} />
+        <InputField icon={Phone}     placeholder={t("common.phone")} value={telephone} onChange={(e) => setTelephone(e.target.value)} />
+        <InputField icon={MapPin}    placeholder={t("common.address")} value={adresse}   onChange={(e) => setAdresse(e.target.value)} />
         <InputField icon={Hash}      placeholder="KVK Nummer"    value={kvknr}     onChange={(e) => setKvknr(e.target.value)} />
         <InputField icon={Building2} placeholder="BTW Nummer"    value={btwnr}     onChange={(e) => setBtwnr(e.target.value)} />
       </div>
@@ -68,7 +70,7 @@ const NewClientForm = ({ onCreated }) => {
         className="w-fit bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-        {loading ? "Création..." : "Créer le Client"}
+        {loading ? t("common.saving") : t("clients.add_button")}
       </button>
     </div>
   );

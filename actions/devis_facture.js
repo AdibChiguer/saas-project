@@ -1,19 +1,23 @@
 "use server";
 // lib/devis/actions.js
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import puppeteer from "puppeteer";
 import { buildDevisHtml } from "@/lib/buildDevisHtml";
 import { buildFactureHtml } from "@/lib/buildFactureHtml";
-
-const prisma = new PrismaClient();
+import { getOrCreateUser } from "./user";
 
 // ─────────────────────────────────────────────────────────────────
 // getClients()
 // ─────────────────────────────────────────────────────────────────
 export async function getClients() {
   try {
+    const res = await getOrCreateUser();
+    if (res.status !== 200) return res;
+    const user = res.user;
+
     const clients = await prisma.client.findMany({
+      where: { ownerId: user.id },
       select: { id: true, nom: true, email: true },
       orderBy: { nom: "asc" },
     });
@@ -21,8 +25,6 @@ export async function getClients() {
   } catch (err) {
     console.error("[getClients]", err);
     return { data: null, error: "Impossible de charger les clients." };
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -35,8 +37,16 @@ export async function searchDevis({ clientId, semaineRef }) {
   }
 
   try {
+    const res = await getOrCreateUser();
+    if (res.status !== 200) return { data: null, error: res.error };
+    const user = res.user;
+
     const devisList = await prisma.devis.findMany({
-      where: { clientId, semaineRef },
+      where: { 
+        clientId, 
+        semaineRef,
+        client: { ownerId: user.id }
+      },
       select: {
         id: true,
         numero: true,
@@ -51,15 +61,13 @@ export async function searchDevis({ clientId, semaineRef }) {
   } catch (err) {
     console.error("[searchDevis]", err);
     return { data: null, error: "Erreur lors de la recherche." };
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// generateDevisPDF({ devisNumero?, semaineRef?, clientId? })
+// generateDevisPDF({ devisNumero?, semaineRef?, clientId?, locale? })
 // ─────────────────────────────────────────────────────────────────
-export async function generateDevisPDF({ devisNumero, semaineRef, clientId }) {
+export async function generateDevisPDF({ devisNumero, semaineRef, clientId, locale = "fr" }) {
   if (!devisNumero && (!semaineRef || !clientId)) {
     return {
       data: null,
@@ -68,6 +76,10 @@ export async function generateDevisPDF({ devisNumero, semaineRef, clientId }) {
   }
 
   try {
+    const authRes = await getOrCreateUser();
+    if (authRes.status !== 200) return { data: null, error: authRes.error };
+    const currentUser = authRes.user;
+
     // ── 1. Company settings ──────────────────────────────────────
     const parametres = await prisma.parametre.findMany();
     const param = Object.fromEntries(parametres.map((p) => [p.cle, p.valeur]));
@@ -77,21 +89,25 @@ export async function generateDevisPDF({ devisNumero, semaineRef, clientId }) {
       ? await prisma.devis.findUnique({
           where: { numero: devisNumero },
           include: {
-            client: { include: { owner: true } },   // ← owner fetched here
+            client: { include: { owner: true } },
             lignes: { include: { workLog: true } },
           },
         })
       : await prisma.devis.findFirst({
-          where: { semaineRef, clientId },
+          where: { 
+            semaineRef, 
+            clientId,
+            client: { ownerId: currentUser.id }
+          },
           orderBy: { createdAt: "desc" },
           include: {
-            client: { include: { owner: true } },   // ← owner fetched here
+            client: { include: { owner: true } },
             lignes: { include: { workLog: true } },
           },
         });
 
-    if (!devis) {
-      return { data: null, error: "Devis introuvable." };
+    if (!devis || devis.client.ownerId !== currentUser.id) {
+      return { data: null, error: "Devis introuvable ou accès refusé." };
     }
 
     // ── 3. User is available directly via devis.client.owner ─────
@@ -107,7 +123,7 @@ export async function generateDevisPDF({ devisNumero, semaineRef, clientId }) {
     });
 
     // ── 5. Build HTML ─────────────────────────────────────────────
-    const html = buildDevisHtml({ devis, workLogs, param, user });
+    const html = buildDevisHtml({ devis, workLogs, param, user, locale });
 
     // ── 6. Puppeteer → PDF ───────────────────────────────────────
     const browser = await puppeteer.launch({
@@ -134,27 +150,24 @@ export async function generateDevisPDF({ devisNumero, semaineRef, clientId }) {
   } catch (err) {
     console.error("[generateDevisPDF]", err);
     return { data: null, error: "Erreur lors de la génération du PDF." };
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
-export async function generateFacturePDF({ factureId, factureNumero }) {
+export async function generateFacturePDF({ factureId, factureNumero, locale = "fr" }) {
   if (!factureId && !factureNumero) {
     return { data: null, error: "Fournissez factureId ou factureNumero." };
   }
  
   try {
-    // ── 1. Parametre table (IBAN, BTW nr, payment days, logo text) ──
+    const authRes = await getOrCreateUser();
+    if (authRes.status !== 200) return { data: null, error: authRes.error };
+    const currentUser = authRes.user;
+
+    // ── 1. Parametre table ──
     const parametres = await prisma.parametre.findMany();
     const param = Object.fromEntries(parametres.map((p) => [p.cle, p.valeur]));
-    console.log(param);
  
-    // ── 2. Fetch Facture — include client.owner for logged-in user info ──
-    //
-    // client.owner = the User who created this client = the logged-in user.
-    // All user fields (name, adresse, telephone, email, Sofinummer, kvknr)
-    // come from this relation — nothing is hardcoded.
+    // ── 2. Fetch Facture ──
     const whereClause = factureId
       ? { id: factureId }
       : { numero: factureNumero };
@@ -162,31 +175,23 @@ export async function generateFacturePDF({ factureId, factureNumero }) {
     const facture = await prisma.facture.findUnique({
       where: whereClause,
       include: {
-        client: {
-          include: {
-            owner: true,   // ← User: name, adresse, telephone, email, Sofinummer, kvknr
-          },
-        },
+        client: { include: { owner: true } },
         devis: {
           include: {
-            lignes: {
-              include: {
-                workLog: true, // ← needed for day-of-week grouping in the table
-              },
-            },
+            lignes: { include: { workLog: true } },
           },
         },
       },
     });
  
-    if (!facture) {
-      return { data: null, error: "Facture introuvable." };
+    if (!facture || facture.client.ownerId !== currentUser.id) {
+      return { data: null, error: "Facture introuvable ou accès refusé." };
     }
  
-    // ── 3. Build HTML ─────────────────────────────────────────────────
-    const html = buildFactureHtml({ facture, param });
+    // ── 3. Build HTML ──
+    const html = buildFactureHtml({ facture, param, locale });
  
-    // ── 4. Render PDF with Puppeteer ──────────────────────────────────
+    // ── 4. Render PDF ──
     const browser = await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -203,7 +208,6 @@ export async function generateFacturePDF({ factureId, factureNumero }) {
  
     await browser.close();
  
-    // ── 5. Return base64 (Server Actions can't stream Buffers) ────────
     const base64   = Buffer.from(pdfBuffer).toString("base64");
     const filename = `facture_${facture.numero}.pdf`;
  
@@ -211,7 +215,5 @@ export async function generateFacturePDF({ factureId, factureNumero }) {
   } catch (err) {
     console.error("[generateFacturePDF]", err);
     return { data: null, error: "Erreur lors de la génération du PDF." };
-  } finally {
-    await prisma.$disconnect();
   }
 }

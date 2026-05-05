@@ -5,6 +5,10 @@ import { getOrCreateUser } from "./user";
 
 export const createWorkLog = async (payload) => {
   try {
+    const res = await getOrCreateUser();
+    if (res.status !== 200) return res;
+    const user = res.user;
+
     const {
       clientId, startAt, endAt, lieu, modeTarif,
       prixUnitaire, notes, semaineRef,
@@ -12,17 +16,23 @@ export const createWorkLog = async (payload) => {
     } = payload;
 
     if (!clientId || !startAt || !endAt || !modeTarif || !prixUnitaire) {
-      return { status: 400, error: "Missing required fields" };
+      return { status: 400, error: "Champs obligatoires manquants." };
+    }
+
+    // Vérifier que le client appartient à l'utilisateur
+    const client = await prisma.client.findUnique({ where: { id: clientId } });
+    if (!client || client.ownerId !== user.id) {
+      return { status: 403, error: "Accès au client refusé." };
     }
 
     const startDate = new Date(startAt);
     const endDate   = new Date(endAt);
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      return { status: 400, error: "Invalid datetime" };
+      return { status: 400, error: "Format de date invalide." };
     }
     if (endDate <= startDate) {
-      return { status: 400, error: "End datetime must be after start datetime" };
+      return { status: 400, error: "La date de fin doit être après le début." };
     }
 
     const heuresTotal = (endDate - startDate) / (1000 * 60 * 60);
@@ -47,21 +57,28 @@ export const createWorkLog = async (payload) => {
     return { status: 201, data: workLog };
   } catch (error) {
     console.log("🔴 createWorkLog error:", error);
-    return { status: 500, error: "Internal Server Error" };
+    return { status: 500, error: "Erreur serveur interne." };
   }
 };
 
 export const getWorkLogsBySemaine = async (semaineRef) => {
   try {
+    const res = await getOrCreateUser();
+    if (res.status !== 200) return res;
+    const user = res.user;
+
     const workLogs = await prisma.workLog.findMany({
-      where: { semaineRef },
+      where: { 
+        semaineRef,
+        client: { ownerId: user.id } // Filtrage par utilisateur !
+      },
       include: { client: true },
       orderBy: { startAt: "asc" },
     });
     return { status: 200, data: workLogs };
   } catch (error) {
     console.log("🔴 getWorkLogsBySemaine error:", error);
-    return { status: 500, error: "Internal Server Error" };
+    return { status: 500, error: "Erreur lors de la récupération." };
   }
 };
 

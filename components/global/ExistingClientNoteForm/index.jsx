@@ -9,9 +9,11 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Clock, Users, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
 
 const WorkLogForm = ({ initialClientId, editId }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [clients, setClients]                   = useState([]);
   const [clientId, setClientId]                 = useState(initialClientId || "");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
@@ -102,17 +104,17 @@ const WorkLogForm = ({ initialClientId, editId }) => {
   };
 
   async function handleSubmit() {
-    if (!clientId) { toast.error("Veuillez choisir un client"); return; }
+    if (!clientId) { toast.error(t("work_log.client_required")); return; }
 
     const startDate = new Date(startAt);
     const endDate   = new Date(endAt);
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      toast.error("Veuillez renseigner une date/heure valide");
+      toast.error(t("common.error"));
       return;
     }
     if (endDate <= startDate) {
-      toast.error("La date/heure de fin doit être après le début");
+      toast.error(t("common.error"));
       return;
     }
 
@@ -135,13 +137,13 @@ const WorkLogForm = ({ initialClientId, editId }) => {
         : await createWorkLog(payload);
 
       if (res.status === 201 || res.status === 200) {
-        toast.success(editId ? "Note de travail mise à jour !" : "Note de travail enregistrée !");
+        toast.success(t("work_log.success"));
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
-        toast.error("Erreur: " + res.error);
+        toast.error(t("common.error") + ": " + res.error);
       }
     } catch {
-      toast.error("Une erreur est survenue");
+      toast.error(t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -150,7 +152,9 @@ const WorkLogForm = ({ initialClientId, editId }) => {
   return (
     <div className="space-y-8 bg-white p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-sm max-w-4xl mx-auto">
       <div className="flex items-center justify-between border-b border-slate-50 pb-6">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Saisie Journalière</h2>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          {editId ? t("work_log.edit_title") : t("work_log.title")}
+        </h2>
         <button
           onClick={() => setShowNewClientForm(!showNewClientForm)}
           className={cn(
@@ -160,7 +164,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
               : "bg-blue-50 text-blue-600 hover:bg-blue-100 shadow-blue-500/10"
           )}
         >
-          {showNewClientForm ? "Annuler" : "+ Nouveau Client"}
+          {showNewClientForm ? t("common.cancel") : "+ " + t("work_log.new_client")}
         </button>
       </div>
 
@@ -174,7 +178,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
         <div className="grid grid-cols-1 gap-8">
           {/* Client selector */}
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 ml-1">Client</label>
+            <label className="text-sm font-bold text-slate-700 ml-1">{t("work_log.client")}</label>
             <select
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
@@ -194,7 +198,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-2 ml-1">
-                    <span className="text-lg">📅</span> Début de l'intervention
+                    <span className="text-lg">📅</span> {t("work_log.start_at")}
                   </label>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input
@@ -211,7 +215,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
 
                 <div className="space-y-3">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-2 ml-1">
-                    <span className="text-lg">📅</span> Fin de l'intervention
+                    <span className="text-lg">📅</span> {t("work_log.end_at")}
                   </label>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input
@@ -243,7 +247,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Lieu</label>
+                  <label className="text-sm font-bold text-slate-700 ml-1">{t("work_log.location")}</label>
                   <input
                     placeholder="Chantier, Bureau, Remote..."
                     value={lieu}
@@ -256,19 +260,19 @@ const WorkLogForm = ({ initialClientId, editId }) => {
               {/* Mode tarif + Prix + Codes */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Mode Tarif</label>
+                  <label className="text-sm font-bold text-slate-700 ml-1">{t("work_log.rate_mode")}</label>
                   <select
                     value={modeTarif}
                     onChange={(e) => setModeTarif(e.target.value)}
                     className="border border-slate-200 p-4 rounded-2xl w-full bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer font-bold text-slate-900"
                   >
-                    <option value="horaire">Horaire</option>
-                    <option value="forfait">Forfait</option>
+                    <option value="horaire">{t("work_log.hourly")}</option>
+                    <option value="forfait">{t("work_log.fixed")}</option>
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Prix Unitaire (€)</label>
+                  <label className="text-sm font-bold text-slate-700 ml-1">{t("work_log.unit_price")}</label>
                   <div className="relative">
                     <input
                       type="number"
@@ -284,7 +288,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-1.5">
                     <Hash className="w-3.5 h-3.5 text-slate-400" />
-                    Code prestation
+                    {t("work_log.codes")}
                   </label>
                   <input
                     placeholder="ex: ASD-GPM"
@@ -297,7 +301,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
 
               {/* Notes */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Notes / Observations</label>
+                <label className="text-sm font-bold text-slate-700 ml-1">{t("work_log.notes")}</label>
                 <textarea
                   placeholder="Détails du travail effectué..."
                   value={notes}
@@ -311,7 +315,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
                 disabled={loading}
                 className="w-full bg-[#020617] hover:bg-slate-900 text-white px-8 py-5 rounded-[1.5rem] font-black text-lg disabled:opacity-50 transition-all shadow-xl shadow-slate-950/20 active:scale-[0.98] mt-4"
               >
-                {loading ? "Enregistrement..." : "Enregistrer la journée"}
+                {loading ? t("work_log.saving") : t("work_log.save_button")}
               </button>
             </div>
           )}
@@ -321,7 +325,7 @@ const WorkLogForm = ({ initialClientId, editId }) => {
               <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                 <Users className="w-8 h-8 text-slate-200" />
               </div>
-              <p className="font-bold text-slate-400">Veuillez sélectionner un client pour continuer</p>
+              <p className="font-bold text-slate-400">{t("work_log.client_required")}</p>
             </div>
           )}
         </div>

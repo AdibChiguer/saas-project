@@ -6,6 +6,8 @@ import { getOrCreateUser } from "@/actions/user";
 import { exportDevisToExcel } from "@/lib/docs";
 import { generateDevisPDF } from "@/actions/devis_facture"; 
 import { useEffect, useState, useCallback } from "react";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatCurrency } from "@/lib/i18n";
 import { 
   Calendar, 
   Users, 
@@ -19,6 +21,10 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function DevisPage() {
+  const { locale, t } = useLanguage();
+  // Mapping simple locale to full BCP 47 locale for Intl
+  const intlLocale = locale === 'nl' ? 'nl-NL' : locale === 'en' ? 'en-US' : 'fr-FR';
+
   const [semaineRef, setSemaineRef] = useState("");
   const [clientId, setClientId] = useState("");
   const [clients, setClients] = useState([]);
@@ -89,6 +95,7 @@ export default function DevisPage() {
 
     const { data, filename, error } = await generateDevisPDF({
       devisNumero: devis.numero,
+      locale: locale, // Pass the current locale
     });
 
     if (error) {
@@ -113,9 +120,9 @@ export default function DevisPage() {
   async function handleDownloadExcel(devis) {
     const userRes = await getOrCreateUser();
     if (userRes.status === 200) {
-      exportDevisToExcel(devis, userRes.user);
+      exportDevisToExcel(devis, userRes.user, locale); // Pass the current locale
     } else {
-      exportDevisToExcel(devis);
+      exportDevisToExcel(devis, null, locale);
     }
   }
 
@@ -124,10 +131,10 @@ export default function DevisPage() {
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
-            Gestion des Devis
+            {t("invoices.title")}
           </h1>
           <p className="text-sm md:text-base text-zinc-500 font-medium">
-            Génération automatique et centralisée par client.
+            {t("invoices.subtitle")}
           </p>
         </div>
 
@@ -164,7 +171,7 @@ export default function DevisPage() {
               onChange={(e) => setClientId(e.target.value)}
               className="bg-transparent border-none p-2 text-sm font-bold focus:ring-0 outline-none w-full sm:min-w-[150px]"
             >
-              <option value="">Tous les clients</option>
+              <option value="">{t("invoices.all_clients")}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>{c.nom}</option>
               ))}
@@ -191,12 +198,12 @@ export default function DevisPage() {
           <table className="w-full text-left border-collapse min-w-[900px] lg:min-w-full">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800">
-                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400">Numéro</th>
-                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
-                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-center">Semaine</th>
-                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-right">Total HT</th>
-                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-center">Statut</th>
-                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-right">Actions</th>
+                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400">{t("invoices.table.number")}</th>
+                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400">{t("invoices.table.client")}</th>
+                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-center">{t("invoices.table.week")}</th>
+                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-right">{t("invoices.table.total_ht")}</th>
+                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-center">{t("invoices.table.status")}</th>
+                <th className="p-4 md:p-6 text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-400 text-right">{t("invoices.table.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800">
@@ -205,7 +212,7 @@ export default function DevisPage() {
                   <td colSpan="6" className="p-10 md:p-20 text-center">
                     <div className="flex flex-col items-center gap-4 text-zinc-400">
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="font-bold text-sm">Chargement des devis...</p>
+                      <p className="font-bold text-sm">{t("invoices.loading")}</p>
                     </div>
                   </td>
                 </tr>
@@ -214,8 +221,8 @@ export default function DevisPage() {
                   <td colSpan="6" className="p-10 md:p-20 text-center">
                     <div className="flex flex-col items-center gap-4 text-zinc-300">
                       <Search className="w-10 h-10 md:w-12 md:h-12" />
-                      <p className="text-lg md:text-xl font-bold">Aucun devis trouvé</p>
-                      <p className="text-xs md:text-sm font-medium">Enregistrez du travail pour voir les devis apparaître ici.</p>
+                      <p className="text-lg md:text-xl font-bold">{t("invoices.empty.title")}</p>
+                      <p className="text-xs md:text-sm font-medium">{t("invoices.empty.subtitle")}</p>
                     </div>
                   </td>
                 </tr>
@@ -243,7 +250,7 @@ export default function DevisPage() {
                         </span>
                       </td>
                       <td className="p-4 md:p-6 text-right font-black text-sm md:text-base text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                        {devis.total.toLocaleString("fr-FR")} €
+                        {formatCurrency(devis.total, intlLocale)}
                       </td>
                       <td className="p-4 md:p-6 text-center">
                         <span className={`inline-flex items-center gap-1 px-1.5 md:gap-1.5 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${
@@ -255,7 +262,7 @@ export default function DevisPage() {
                           {devis.statut === "accepte" && <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" />}
                           {devis.statut === "envoye"  && <Send className="w-2.5 h-2.5 md:w-3 md:h-3" />}
                           {devis.statut === "refuse"  && <XCircle className="w-2.5 h-2.5 md:w-3 md:h-3" />}
-                          {devis.statut}
+                          {t(`invoices.status.${devis.statut}`)}
                         </span>
                       </td>
                       <td className="p-4 md:p-6">
@@ -264,7 +271,7 @@ export default function DevisPage() {
                           {/* Excel export — unchanged */}
                           <button
                             onClick={() => handleDownloadExcel(devis)}
-                            title="Exporter en Excel"
+                            title={t("invoices.download_excel")}
                             className="p-1.5 md:p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg md:rounded-xl transition-all"
                           >
                             <FileSpreadsheet className="w-4 h-4 md:w-5 md:h-5" />
@@ -274,7 +281,7 @@ export default function DevisPage() {
                           <button
                             onClick={() => handleDownloadPDF(devis)}
                             disabled={isDownloading}
-                            title="Télécharger PDF"
+                            title={t("invoices.download_pdf")}
                             className="p-1.5 md:p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg md:rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {isDownloading ? (
@@ -290,13 +297,13 @@ export default function DevisPage() {
                             onClick={() => handleStatusChange(devis.id, "envoye")}
                             className="px-2 md:px-3 py-1 md:py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] md:text-xs font-black rounded-lg hover:scale-105 transition-transform"
                           >
-                            Envoyer
+                            {t("invoices.actions.send")}
                           </button>
                           <button
                             onClick={() => handleStatusChange(devis.id, "accepte")}
                             className="px-2 md:px-3 py-1 md:py-1.5 bg-emerald-600 text-white text-[10px] md:text-xs font-black rounded-lg hover:scale-105 transition-transform"
                           >
-                            Accepter
+                            {t("invoices.actions.accept")}
                           </button>
                         </div>
                       </td>

@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { getDashboardStats, updateWorkLog, deleteWorkLog } from "@/actions/workLog";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatCurrency, formatDate } from "@/lib/i18n";
 import {
   ChevronLeft,
   ChevronRight,
@@ -23,9 +25,13 @@ import { cn } from "@/lib/utils";
 export default function Dashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { locale, t } = useLanguage();
   const [stats, setStats] = useState({ weekly: [], monthly: [] });
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Mapping simple locale to full BCP 47 locale for Intl
+  const intlLocale = locale === 'nl' ? 'nl-NL' : locale === 'en' ? 'en-US' : 'fr-FR';
 
   const getWeekRef = useCallback((date) => {
     const d = new Date(date);
@@ -71,7 +77,7 @@ export default function Dashboard() {
   const totalWeeklyAmount = stats.weekly.reduce((acc, log) => acc + log.montant, 0);
 
   const handleDelete = async (id) => {
-    if (confirm("Voulez-vous vraiment supprimer cette saisie ?")) {
+    if (confirm(t("dashboard.delete_confirm"))) {
       const res = await deleteWorkLog(id);
       if (res.status === 200) {
         fetchData();
@@ -86,15 +92,15 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Vue d'ensemble</h1>
-          <p className="text-sm md:text-base text-slate-500">Suivi de votre activité et de vos revenus.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{t("dashboard.title")}</h1>
+          <p className="text-sm md:text-base text-slate-500">{t("dashboard.subtitle")}</p>
         </div>
         <button 
           onClick={() => router.push("/dashboard/work-log")}
           className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
         >
           <Plus className="w-5 h-5" />
-          Saisir du temps
+          {t("dashboard.add_time")}
         </button>
       </div>
 
@@ -112,7 +118,7 @@ export default function Dashboard() {
               <button onClick={() => changeWeek(1)} className="hover:text-slate-900 transition-colors">›</button>
             </div>
           </div>
-          <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider">Heures (Semaine)</p>
+          <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider">{t("dashboard.hours_weekly")}</p>
           <h2 className="text-2xl md:text-4xl font-black text-slate-900 mt-1">{totalWeeklyHours.toFixed(1)}h</h2>
         </div>
 
@@ -124,11 +130,11 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-2 bg-slate-50 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold text-slate-400">
               <button onClick={() => changeMonth(-1)} className="hover:text-slate-900 transition-colors">‹</button>
-              <span className="capitalize">{currentDate.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}</span>
+              <span className="capitalize">{currentDate.toLocaleDateString(intlLocale, { month: 'short', year: 'numeric' })}</span>
               <button onClick={() => changeMonth(1)} className="hover:text-slate-900 transition-colors">›</button>
             </div>
           </div>
-          <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider">Heures (Mois)</p>
+          <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider">{t("dashboard.hours_monthly")}</p>
           <h2 className="text-2xl md:text-4xl font-black text-slate-900 mt-1">{totalMonthlyHours.toFixed(1)}h</h2>
         </div>
 
@@ -140,13 +146,13 @@ export default function Dashboard() {
               <div className="w-5 h-5 md:w-6 md:h-6 bg-blue-500 rounded-full opacity-50" />
             </div>
           </div>
-          <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider relative z-10">À facturer (Semaine)</p>
-          <h2 className="text-2xl md:text-4xl font-black text-white mt-1 relative z-10">{totalWeeklyAmount.toLocaleString()} €</h2>
+          <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider relative z-10">{t("dashboard.to_invoice_weekly")}</p>
+          <h2 className="text-2xl md:text-4xl font-black text-white mt-1 relative z-10">{formatCurrency(totalWeeklyAmount, intlLocale)}</h2>
           <button 
             onClick={() => router.push("/dashboard/invoices")}
             className="mt-4 md:mt-6 w-full bg-slate-800 hover:bg-slate-700 text-white py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 transition-all relative z-10"
           >
-            Générer les devis <ArrowRight className="w-4 h-4" />
+            {t("dashboard.generate_quotes")} <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -155,12 +161,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         {/* Left Column: Weekly Detail */}
         <div className="lg:col-span-8 space-y-4 md:space-y-6">
-          <h3 className="text-lg md:text-xl font-bold text-slate-900">Détail de la semaine</h3>
+          <h3 className="text-lg md:text-xl font-bold text-slate-900">{t("dashboard.weekly_detail")}</h3>
           
           <div className="space-y-4">
             {stats.weekly.length === 0 ? (
               <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-100 p-8 md:p-12 text-center">
-                <p className="text-sm md:text-base text-slate-400 font-medium">Aucune activité enregistrée cette semaine.</p>
+                <p className="text-sm md:text-base text-slate-400 font-medium">{t("dashboard.no_activity")}</p>
               </div>
             ) : (
               stats.weekly.map((log) => {
@@ -170,7 +176,7 @@ export default function Dashboard() {
                   <div key={log.id} className="bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all group flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6">
                     <div className="flex items-center gap-4 w-full sm:w-auto">
                       <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-50 rounded-xl md:rounded-2xl flex flex-col items-center justify-center border border-slate-100 shrink-0">
-                        <span className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">{start.toLocaleDateString('fr-FR', { weekday: 'short' })}</span>
+                        <span className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">{start.toLocaleDateString(intlLocale, { weekday: 'short' })}</span>
                         <span className="text-lg md:text-xl font-black text-slate-900">{start.getDate()}</span>
                       </div>
                       
@@ -181,7 +187,7 @@ export default function Dashboard() {
                             {log.modeTarif}
                           </span>
                         </div>
-                        <p className="text-xs font-bold text-slate-900 mt-1">{log.montant.toLocaleString()} €</p>
+                        <p className="text-xs font-bold text-slate-900 mt-1">{formatCurrency(log.montant, intlLocale)}</p>
                       </div>
                     </div>
                     
@@ -195,7 +201,7 @@ export default function Dashboard() {
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-1 sm:mt-2 text-xs md:text-sm font-medium text-slate-400">
                         <span className="flex items-center gap-1.5 shrink-0">
                           <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                          {start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — {end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          {start.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' })} — {end.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         <span className="flex items-center gap-1.5 truncate">
                           <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
@@ -212,8 +218,8 @@ export default function Dashboard() {
                     </div>
 
                     <div className="hidden sm:block text-right shrink-0 ml-auto">
-                      <p className="text-xl md:text-2xl font-black text-slate-900">{(log.montant || 0).toLocaleString()} €</p>
-                      <p className="text-[10px] md:text-xs font-bold text-blue-500 mt-1">{log.heuresTotal}h — {log.prixUnitaire}€/{log.modeTarif === 'horaire' ? 'h' : 'forfait'}</p>
+                      <p className="text-xl md:text-2xl font-black text-slate-900">{formatCurrency(log.montant || 0, intlLocale)}</p>
+                      <p className="text-[10px] md:text-xs font-bold text-blue-500 mt-1">{log.heuresTotal}h — {formatCurrency(log.prixUnitaire, intlLocale)}/{log.modeTarif === 'horaire' ? 'h' : 'forfait'}</p>
                     </div>
 
                     <div className="flex sm:flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
@@ -247,7 +253,7 @@ export default function Dashboard() {
               <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-50 rounded-lg md:rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3 group-hover:bg-blue-50 transition-colors">
                 <FileText className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-hover:text-blue-500" />
               </div>
-              <span className="text-[10px] md:text-sm font-bold text-slate-900">Gérer Devis</span>
+              <span className="text-[10px] md:text-sm font-bold text-slate-900">{t("common.quotes")}</span>
             </button>
             <button 
               onClick={() => router.push("/dashboard/receipts")}
@@ -256,19 +262,19 @@ export default function Dashboard() {
               <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-50 rounded-lg md:rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3 group-hover:bg-emerald-50 transition-colors">
                 <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-hover:text-emerald-500" />
               </div>
-              <span className="text-[10px] md:text-sm font-bold text-slate-900">Gérer Factures</span>
+              <span className="text-[10px] md:text-sm font-bold text-slate-900">{t("common.invoices")}</span>
             </button>
           </div>
 
           <div className="bg-white rounded-2xl md:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col h-[400px] md:h-[500px]">
             <div className="p-4 md:p-6 border-b border-slate-50 flex justify-between items-center">
-              <h3 className="font-bold text-slate-900 text-sm md:text-base">Activité du mois</h3>
-              <span className="text-[8px] md:text-[10px] font-black uppercase text-slate-400 tracking-widest">{stats.monthly.length} jours</span>
+              <h3 className="font-bold text-slate-900 text-sm md:text-base">{t("dashboard.monthly_activity")}</h3>
+              <span className="text-[8px] md:text-[10px] font-black uppercase text-slate-400 tracking-widest">{stats.monthly.length} {stats.monthly.length > 1 ? t("pdf.days") || "jours" : t("pdf.day") || "jour"}</span>
             </div>
             <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2">
               {stats.monthly.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-slate-300 text-xs md:text-sm font-medium">Aucune activité ce mois-ci.</p>
+                  <p className="text-slate-300 text-xs md:text-sm font-medium">{t("dashboard.no_activity_month") || "Aucune activité ce mois-ci."}</p>
                 </div>
               ) : (
                 stats.monthly.map((log) => (
@@ -278,7 +284,7 @@ export default function Dashboard() {
                       <div className="min-w-0">
                         <p className="text-xs md:text-sm font-bold text-slate-900 truncate">{log.client.nom}</p>
                         <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">
-                          {new Date(log.startAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          {new Date(log.startAt).toLocaleDateString(intlLocale, { day: 'numeric', month: 'short' })}
                         </p>
                       </div>
                     </div>

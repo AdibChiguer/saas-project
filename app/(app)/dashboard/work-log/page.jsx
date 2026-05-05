@@ -4,9 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import WorkLogForm from "@/components/global/ExistingClientNoteForm";
 import { ArrowLeft, Clock } from "lucide-react";
 import { Suspense } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 function WorkLogContent() {
   const router = useRouter();
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
 
@@ -22,7 +24,7 @@ function WorkLogContent() {
           <div className="p-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           </div>
-          Retour au tableau de bord
+          {t("work_log.back_to_dashboard")}
         </button>
 
         <div>
@@ -30,10 +32,10 @@ function WorkLogContent() {
             <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
               <Clock className="w-6 h-6" />
             </div>
-            {editId ? "Modifier la saisie" : "Saisie de travail"}
+            {editId ? t("work_log.edit_title") : t("work_log.title")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm md:text-base font-medium">
-            {editId ? "Modifiez les détails de votre intervention." : "Enregistrez vos heures d'intervention et les détails de votre journée."}
+            {editId ? t("work_log.subtitle_edit") : t("work_log.subtitle")}
           </p>
         </div>
       </header>
@@ -48,9 +50,10 @@ function WorkLogContent() {
 }
 
 export default function WorkLogsPage() {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans selection:bg-blue-500/30">
-      <Suspense fallback={<div>Chargement...</div>}>
+      <Suspense fallback={<div>{t("common.loading")}</div>}>
         <WorkLogContent />
       </Suspense>
     </div>
