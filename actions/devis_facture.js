@@ -2,10 +2,29 @@
 // lib/devis/actions.js
 
 import { prisma } from "@/lib/prisma";
-import puppeteer from "puppeteer";
 import { buildDevisHtml } from "@/lib/buildDevisHtml";
 import { buildFactureHtml } from "@/lib/buildFactureHtml";
 import { getOrCreateUser } from "./user";
+
+// Configuration Puppeteer pour Vercel
+const getBrowser = async () => {
+  if (process.env.VERCEL) {
+    const chromium = require("@sparticuz/chromium");
+    const puppeteer = require("puppeteer-core");
+    return await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
+  } else {
+    const puppeteer = require("puppeteer");
+    return await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
+};
 
 // ─────────────────────────────────────────────────────────────────
 // getClients()
@@ -126,10 +145,7 @@ export async function generateDevisPDF({ devisNumero, semaineRef, clientId, loca
     const html = buildDevisHtml({ devis, workLogs, param, user, locale });
 
     // ── 6. Puppeteer → PDF ───────────────────────────────────────
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const browser = await getBrowser();
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
@@ -192,10 +208,7 @@ export async function generateFacturePDF({ factureId, factureNumero, locale = "f
     const html = buildFactureHtml({ facture, param, locale });
  
     // ── 4. Render PDF ──
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const browser = await getBrowser();
  
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
