@@ -8,9 +8,10 @@ import { getOrCreateUser } from "./user";
 
 // Configuration Puppeteer pour Vercel
 const getBrowser = async () => {
+  const puppeteer = require("puppeteer-core");
+
   if (process.env.VERCEL) {
     const chromium = require("@sparticuz/chromium");
-    const puppeteer = require("puppeteer-core");
     return await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
@@ -18,10 +19,14 @@ const getBrowser = async () => {
       headless: chromium.headless,
     });
   } else {
-    const puppeteer = require("puppeteer");
+    const executablePath =
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
+      process.env.CHROME_EXECUTABLE_PATH;
+
     return await puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      ...(executablePath ? { executablePath } : {}),
     });
   }
 };
